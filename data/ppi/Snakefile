@@ -1,0 +1,21 @@
+configfile: 'data.yml'
+
+from os.path import join
+
+files = list(config.keys())
+output_dir = 'output'
+output_fmt = join(output_dir, '{filename}')
+
+rule all:
+    input:
+        expand(output_fmt, filename=files)
+
+rule download_and_capitalize:
+    output:
+        output_fmt
+    params:
+        url = lambda w: config[w.filename]
+    shell:
+        '''
+        wget -qO- {params.url} | tr '[:lower:]' '[:upper:]' > {output}
+        '''

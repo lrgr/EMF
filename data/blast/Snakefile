@@ -1,0 +1,117 @@
+gi_data_fps = {
+    'collins': '../gi/output/collins_et_al/collins_et_al-dels_only.cpkl',
+    'roguev': '../gi/output/roguev_et_al/roguev_et_al-dels_only.cpkl',
+    'ryan': '../gi/output/ryan_et_al_2012/ryan_2012_sp_gis.cpkl',
+    'costanzo10': '../gi/output/costanzo_et_al_2010/costanzo2010-GI_score.cpkl'
+}
+
+raw_blast = 'output/raw/sp-to-sc-blast.tsv'
+dense_blast = 'output/processed/sp-to-sc-blast.cpkl'
+dense_blast_log = 'output/processed/log.txt'
+
+threshs = [0, 3,5,10]
+
+thresh_scores = 'output/processed/sp-to-sc-blast-{thresh}std.tsv'
+thresh_scores_swap = 'output/processed/sc-to-sp-blast-{thresh}std.tsv'
+
+gi_specific_scores = 'output/gi_specific_scores/{target_gis}-{source_gis}-blast_scores.cpkl'
+gi_specific_scores_log = 'output/gi_specific_scores/{target_gis}-{source_gis}-blast_scores.log'
+
+# TODO: fix this
+gi_specific_scores_swap = 'output/gi_specific_scores/src={target_gis}-tgt={source_gis}-blast_scores.cpkl'
+gi_specific_scores_log_swap = 'output/gi_specific_scores/src={target_gis}-tgt={source_gis}-blast_scores.log'
+# TODO: fix this
+
+
+url = "https://obj.umiacs.umd.edu/lrgr/all_vs_all_BLAST/pombase-sgd/sc-to-sp.tsv"
+
+rule all:
+    input:
+        expand(thresh_scores, thresh=threshs),
+        expand(thresh_scores_swap, thresh=threshs)
+
+rule restrict:
+    input:
+        expand(gi_specific_scores, zip, target_gis=['roguev', 'ryan'], source_gis=['collins', 'costanzo10']),
+        expand(gi_specific_scores_swap, zip, target_gis=['roguev', 'ryan'], source_gis=['collins', 'costanzo10'])
+
+
+rule restrict_blast_scores:
+    input:
+        blast=dense_blast,
+        target_gis=lambda w: gi_data_fps[w.target_gis],
+        source_gis=lambda w: gi_data_fps[w.source_gis]
+    output:
+        gi_specific_scores
+    log:
+        gi_specific_scores_log
+    shell:
+        '''
+        python restrict_blast_scores.py \
+            --input {input.blast} \
+            --output {output} \
+            --target_gis {input.target_gis} \
+            --source_gis {input.source_gis} | tee {log}
+        '''
+
+
+rule restrict_blast_scores_swap:
+    input:
+        blast=dense_blast,
+        target_gis=lambda w: gi_data_fps[w.target_gis],
+        source_gis=lambda w: gi_data_fps[w.source_gis]
+    output:
+        gi_specific_scores_swap
+    log:
+        gi_specific_scores_log_swap
+    shell:
+        '''
+        python restrict_blast_scores.py \
+            --input {input.blast} \
+            --output {output} \
+            --target_gis {input.target_gis} \
+            --source_gis {input.source_gis} \
+            --swap | tee {log}\
+        '''
+
+rule process:
+    input:
+        raw_blast
+    output:
+        dense_blast
+    log:
+        dense_blast_log
+    shell:
+        '''
+        python blast_tsv_to_matrix.py --input {input} --output {output} | tee {log}
+        '''
+
+rule thresh:
+    input:
+        raw_blast
+    output:
+        thresh_scores
+    shell:
+        '''
+        python blast_tsv_to_3col.py --input {input} --output {output} --thresh {wildcards.thresh}
+        '''
+
+rule thresh_swap:
+    input:
+        raw_blast
+    output:
+        thresh_scores_swap
+    shell:
+        '''
+        python blast_tsv_to_3col.py --input {input} --output {output} --thresh {wildcards.thresh} --swap
+        '''
+
+rule download:
+    params:
+        url=url,
+    output:
+        raw_blast
+    shell:
+        '''
+        wget -O {output} {params.url}
+        '''

@@ -1,0 +1,18 @@
+name: 'gi-matrix-completion'
+channels:
+  - defaults
+  - bioconda
+  - conda-forge
+dependencies:
+  - numpy
+  - scikit-learn
+  - scipy
+  - matplotlib
+  - pandas
+  - seaborn
+  - snakemake=5.8.1
+  - tensorflow=1.*
+  - networkx
+  - nose
+  - xlrd
+  - hyperopt

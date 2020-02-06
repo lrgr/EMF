@@ -1,0 +1,17 @@
+collins_et_al/collins_et_al-dels_only.cpkl: https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v0/collins_et_al/collins_et_al-dels_only.cpkl
+collins_et_al/collins_et_al_gene_annotations.tsv: https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v0/collins_et_al/collins_et_al_gene_annotations.tsv
+roguev_et_al/roguev_et_al-dels_only.cpkl: https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v0/roguev_et_al/roguev_et_al-dels_only.cpkl
+roguev_et_al/sc-sp-homs.tsv: https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v0/roguev_et_al/sc-sp-homs.tsv
+roguev_et_al/sp-sc-homs.tsv: https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v0/roguev_et_al/sp-sc-homs.tsv
+meta.txt: https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v0/meta.txt
+costanzo_et_al_2010/costanzo2010-GI_score.cpkl: |
+  https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v0/costanzo_et_al_2010/costanzo2010-GI_score.cpkl
+costanzo_et_al_2010/costanzo2010-GI_pval.cpkl: |
+  https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v0/costanzo_et_al_2010/costanzo2010-GI_pval.cpkl
+ryan_et_al_2012/ryan_2012_sp_gis.cpkl: |
+  https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v0/ryan_et_al_2012/ryan_2012_sp_gis.cpkl
+
+homologs/costanzo10-cols_ryan12-cols_homologs.tsv: | 
+  https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v0/homologs/ryan12_costanzo10/costanzo10-cols_ryan12-cols_homologs.tsv
+homologs/ryan12-cols_costanzo10-cols_homologs.tsv: |
+  https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v0/homologs/ryan12_costanzo10/ryan12-cols_costanzo10-cols_homologs.tsv
