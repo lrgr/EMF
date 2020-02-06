@@ -1,0 +1,34 @@
+tgt: ryan
+src: costanzo10
+tgt-ppi: sp-biogrid
+src-ppi: sc-biogrid
+sim_scores: ryan-costanzo
+validation-fraction: 0.1
+n-repeats: 1
+n-hyperopt-iters: 50
+
+# fixed params
+report_every: 10
+max_iter: 500
+early_stop: 5
+
+# params for hyperopts
+rank: [50, 200]
+rank_step: 5
+lambda_source: [0.1, 1.0]
+lambda_sim: [0.1, 10]
+
+lambda_tgt_rl: [0.1, 1.0]
+lambda_src_rl: [0.1, 1.0]
+lambda_b: [0.1, 10]
+
+# lambda_u:  [10, 100]
+# lambda_v:  [10, 100]
+# lambda_us: [10, 100]
+# lambda_vs: [10, 100]
+
+lambda_u:  [0.1, 15]
+lambda_v:  [0.1, 15]
+lambda_us: [0.1, 15]
+lambda_vs: [0.1, 15]
+lr: [0.1, 0.5]

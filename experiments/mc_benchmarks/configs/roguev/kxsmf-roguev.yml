@@ -1,0 +1,58 @@
+algorithm: KXSMF2
+tgt_gis: roguev
+src_gis: collins
+sim_scores: roguev-collins
+tgt_ppi: sp-biogrid
+src_ppi: sc-biogrid
+
+n_repeats: 10
+
+params:
+  '0.25':
+    lambda_sim: 1.152
+    lambda_src: 0.229
+    lambda_src_rl: 0.103
+    lambda_tgt_rl: 0.217
+    lambda_u: 9.836
+    lambda_us: 14.834
+    lambda_v: 7.093
+    lambda_vs: 8.139
+    lr: 0.110
+    iters: 500
+    rank: 100
+  '0.5':
+    lambda_sim: 1.617
+    lambda_src: 0.227
+    lambda_src_rl: 0.607
+    lambda_tgt_rl: 0.435
+    lambda_u: 5.284
+    lambda_us: 10.847
+    lambda_v: 10.305
+    lambda_vs: 9.442
+    lr: 0.326
+    iters: 100
+    rank: 100
+  '0.75':
+    lambda_sim: 1.965
+    lambda_src: 0.148
+    lambda_src_rl: 0.613
+    lambda_tgt_rl: 0.900
+    lambda_u: 6.900
+    lambda_us: 7.387
+    lambda_v: 7.139
+    lambda_vs: 8.063
+    lr: 0.258
+    iters: 95
+    rank: 55
+  '0.9':
+    lambda_sim: 1.622
+    lambda_src: 0.320
+    lambda_src_rl: 0.901
+    lambda_tgt_rl: 0.148
+    lambda_u: 6.222
+    lambda_us: 8.091
+    lambda_v: 10.591
+    lambda_vs: 8.367
+    lr: 0.214
+    iters: 64
+    rank: 60

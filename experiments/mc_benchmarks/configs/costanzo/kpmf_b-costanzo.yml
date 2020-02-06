@@ -1,0 +1,38 @@
+algorithm: KPMF-b
+tgt_gis: costanzo10
+tgt_ppi: sc-biogrid
+n_repeats: 10
+
+params:
+  '0.25':
+    lambda_b: 2.697
+    lambda_f: 12.171
+    lambda_h: 5.391
+    lr: 0.113
+    iters: 74
+    rank: 200
+    rl_lambda: 0.172
+  '0.5':
+    lambda_b: 0.199
+    lambda_f: 3.736
+    lambda_h: 12.185
+    lr: 0.350
+    iters: 75
+    rank: 195
+    rl_lambda: 0.310
+  '0.75':
+    lambda_b: 1.186
+    lambda_f: 12.185
+    lambda_h: 4.239
+    lr: 0.291
+    iters: 77
+    rank: 160
+    rl_lambda: 0.012
+  '0.9':
+    lambda_b: 0.249
+    lambda_f: 7.820
+    lambda_h: 5.502
+    lr: 0.365
+    iters: 40
+    rank: 135
+    rl_lambda: 0.053

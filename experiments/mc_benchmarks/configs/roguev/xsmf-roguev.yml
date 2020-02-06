@@ -1,0 +1,48 @@
+algorithm: XSMF2
+tgt_gis: roguev
+src_gis: collins
+sim_scores: roguev-collins
+
+n_repeats: 10
+
+params:
+  '0.25':
+    lambda_sim: 1.971
+    lambda_src: 0.448
+    lambda_u: 8.843
+    lambda_us: 11.059
+    lambda_v: 10.860
+    lambda_vs: 10.527
+    lr: 0.246
+    iters: 500
+    rank: 100
+  '0.5':
+    lambda_sim: 1.400
+    lambda_src: 0.542
+    lambda_u: 11.346
+    lambda_us: 12.935
+    lambda_v: 5.501
+    lambda_vs: 6.368
+    lr: 0.266
+    iters: 481
+    rank: 90
+  '0.75':
+    lambda_sim: 1.988
+    lambda_src: 0.413
+    lambda_u: 12.288
+    lambda_us: 14.399
+    lambda_v: 14.711
+    lambda_vs: 5.941
+    lr: 0.471
+    iters: 72
+    rank: 80
+  '0.9':
+    lambda_sim: 0.701
+    lambda_src: 0.974
+    lambda_u: 5.333
+    lambda_us: 6.351
+    lambda_v: 5.107
+    lambda_vs: 5.919
+    lr: 0.187
+    iters: 500
+    rank: 85

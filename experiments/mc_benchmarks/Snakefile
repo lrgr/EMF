@@ -1,0 +1,548 @@
+from os.path import join
+import yaml
+
+with open('data.yml') as IN:
+    data_paths = yaml.safe_load(IN)
+
+if config['algorithm'] == 'PMF':
+    exp_name = 'tgt-gi={tgi}_alg={{alg}}_hf{{hf}}_cv{cv}'
+
+    exp_name = exp_name.format(tgi=config['tgt_gis'],
+                               cv=config['n_repeats'])
+elif config['algorithm'] == 'PMF-b':
+    exp_name = 'tgt-gi={tgi}_alg={{alg}}_hf{{hf}}_cv{cv}'
+
+    exp_name = exp_name.format(tgi=config['tgt_gis'],
+                               cv=config['n_repeats'])
+elif config['algorithm'] == 'KPMF':
+    exp_name = 'tgt-gi={tgi}_tgt-ppi={tppi}_alg={{alg}}_hf{{hf}}_cv{cv}'
+
+    exp_name = exp_name.format(tgi=config['tgt_gis'],
+                               tppi=config['tgt_ppi'],
+                               cv=config['n_repeats'])
+elif config['algorithm'] == 'KPMF-b':
+    exp_name = 'tgt-gi={tgi}_tgt-ppi={tppi}_alg={{alg}}_hf{{hf}}_cv{cv}'
+
+    exp_name = exp_name.format(tgi=config['tgt_gis'],
+                               tppi=config['tgt_ppi'],
+                               cv=config['n_repeats'])
+elif config['algorithm'] == 'NGMC':
+    exp_name = 'tgt-gi={tgi}_tgt-ppi={tppi}_alg={{alg}}_hf{{hf}}_cv{cv}'
+    exp_name = exp_name.format(tgi=config['tgt_gis'],
+                               tppi=config['tgt_ppi'],
+                               cv=config['n_repeats'])
+# elif config['algorithm'] == 'XSMF':
+#     exp_name = 'tgt-gi={tgi}_src-gi={sgi}_alg={{alg}}_hf{hf}_alg=XSMF_cv{cv}'
+
+#     exp_name = exp_name.format(tgi=config['tgt_gis'],
+#                                sgi=config['src_gis'],
+#                                hf=config['hidden_fraction'],
+#                                cv=config['n_repeats'])
+# elif config['algorithm'] == 'KXSMF':
+#     exp_name = 'tgt-gi={tgi}_tgt_ppi={tppi}_src-gi={sgi}_src-ppi={sppi}_alg={{alg}}_hf{hf}_alg=KXSMF_cv{cv}'
+
+#     exp_name = exp_name.format(tgi=config['tgt_gis'],
+#                                tppi=config['tgt_ppi'],
+#                                sgi=config['src_gis'],
+#                                sppi=config['tgt_ppi'],
+#                                hf=config['hidden_fraction'],
+#                                cv=config['n_repeats'])
+elif config['algorithm'] == 'XSMF2':
+    exp_name = 'tgt-gi={tgi}_src-gi={sgi}_alg={{alg}}_hf{{hf}}_cv{cv}'
+
+    exp_name = exp_name.format(tgi=config['tgt_gis'],
+                               sgi=config['src_gis'],
+                               cv=config['n_repeats'])
+elif config['algorithm'] == 'KXSMF2':
+    exp_name = 'tgt-gi={tgi}_tgt_ppi={tppi}_src-gi={sgi}_src-ppi={sppi}_alg={{alg}}_hf{{hf}}_cv{cv}'
+
+    exp_name = exp_name.format(tgi=config['tgt_gis'],
+                               tppi=config['tgt_ppi'],
+                               sgi=config['src_gis'],
+                               sppi=config['tgt_ppi'],
+                               cv=config['n_repeats'])
+elif config['algorithm'] == 'KXSMF2-b':
+    exp_name = 'tgt-gi={tgi}_tgt_ppi={tppi}_src-gi={sgi}_src-ppi={sppi}_alg={{alg}}_hf{{hf}}_cv{cv}'
+
+    exp_name = exp_name.format(tgi=config['tgt_gis'],
+                               tppi=config['tgt_ppi'],
+                               sgi=config['src_gis'],
+                               sppi=config['tgt_ppi'],
+                               cv=config['n_repeats'])
+else:
+    raise NotImplementedError
+
+output_dir = join('output', exp_name)
+log = join(output_dir, '{}-log.txt'.format(exp_name))
+results = join(output_dir, '{}-results.json'.format(exp_name))
+models_pkl = join(output_dir, '{}_models.pkl'.format(exp_name))
+
+run_benchmark = '../../src/benchmark_mf.py'
+
+params = config['params']
+rule all:
+    input:
+        # expand(results, alg=config['algorithm'], hf=[0.25])
+        expand(results, alg=config['algorithm'], hf=[0.25, 0.5, 0.75, 0.9])
+        # results.format(alg=config['algorithm']),
+        # models_pkl.format(alg=config['algorithm']),
+
+rule pmf:
+    input:
+        gis=data_paths['gis'][config['tgt_gis']]
+    output:
+        results=results.format(alg='PMF', hf='{hf}'),
+        models=models_pkl.format(alg='PMF', hf='{hf}')
+    log:
+        log.format(alg='PMF', hf='{hf}')
+    params:
+        n_repeats = config['n_repeats'],
+        hidden_fraction=lambda w: w['hf'],
+        report_every=10,
+        rank=lambda w: params[w['hf']]['rank'],
+        iters=lambda w: params[w['hf']]['iters'],
+        lr=lambda w: params[w['hf']]['lr'],
+        lam=lambda w: params[w['hf']]['lambda'],
+    shell:
+        '''
+        python {run_benchmark} \
+            --hidden_fraction {params.hidden_fraction} \
+            --n_repeats {params.n_repeats} \
+            --results_output {output.results} \
+            --models_output {output.models} \
+            --logfile {log} \
+            PMF \
+            --target_gis {input.gis}\
+            --report_every {params.report_every}\
+            --rank {params.rank}\
+            --iters {params.iters}\
+            --lr {params.lr}\
+            --lambda_f {params.lam}    
+        '''
+
+rule pmf_b:
+    input:
+        gis=data_paths['gis'][config['tgt_gis']]
+    output:
+        results=results.format(alg='PMF-b', hf='{hf}'),
+        models=models_pkl.format(alg='PMF-b', hf='{hf}')
+    log:
+        log.format(alg='PMF-b', hf='{hf}')
+    params:
+        n_repeats = config['n_repeats'],
+        hidden_fraction=lambda w: w['hf'],
+        report_every=10,
+        rank=lambda w: params[w['hf']]['rank'],
+        iters=lambda w: params[w['hf']]['iters'],
+        lr=lambda w: params[w['hf']]['lr'],
+        lam=lambda w: params[w['hf']]['lambda'],
+        lam_b=lambda w: params[w['hf']]['lambda_b']
+    shell:
+        '''
+        python {run_benchmark} \
+            --hidden_fraction {params.hidden_fraction} \
+            --n_repeats {params.n_repeats} \
+            --results_output {output.results} \
+            --models_output {output.models} \
+            --logfile {log} \
+            PMF_b \
+            --target_gis {input.gis}\
+            --report_every {params.report_every}\
+            --rank {params.rank}\
+            --iters {params.iters}\
+            --lr {params.lr}\
+            --lambda_f {params.lam}\
+            --lambda_b {params.lam_b}
+        '''
+
+rule kpmf:
+    input:
+        gis=data_paths['gis'][config['tgt_gis']],
+        ppi= lambda _ : data_paths['ppi'][config['tgt_ppi']]
+    output:
+        results=results.format(alg='KPMF', hf='{hf}'),
+        models=models_pkl.format(alg='KPMF', hf='{hf}'),
+    log:
+        log.format(alg='KPMF', hf='{hf}')
+    params:
+        n_repeats = config['n_repeats'],
+        hidden_fraction=lambda w: w['hf'],
+        report_every=10,
+        rank=lambda w: params[w['hf']]['rank'],
+        iters=lambda w: params[w['hf']]['iters'],
+        lr=lambda w: params[w['hf']]['lr'],
+        lambda_f=lambda w: params[w['hf']]['lambda_f'],
+        lambda_h=lambda w: params[w['hf']]['lambda_h'],
+        rl_lambda=lambda w: params[w['hf']]['rl_lambda']
+    shell:
+        '''
+        python {run_benchmark} \
+            --hidden_fraction {params.hidden_fraction} \
+            --n_repeats {params.n_repeats} \
+            --results_output {output.results} \
+            --models_output {output.models} \
+            --logfile {log} \
+            KPMF \
+            --target_gis {input.gis}\
+            --target_ppi {input.ppi}\
+            --report_every {params.report_every}\
+            --rank {params.rank}\
+            --iters {params.iters}\
+            --lr {params.lr}\
+            --lambda_f {params.lambda_f}\
+            --lambda_h {params.lambda_h}\
+            --rl_lambda {params.rl_lambda}
+        '''
+
+
+rule kpmfb:
+    input:
+        gis=data_paths['gis'][config['tgt_gis']],
+        ppi= lambda _ : data_paths['ppi'][config['tgt_ppi']]
+    output:
+        results=results.format(alg='KPMF-b', hf='{hf}'),
+        models=models_pkl.format(alg='KPMF-b', hf='{hf}'),
+    log:
+        log.format(alg='KPMF-b', hf='{hf}')
+    params:
+        n_repeats = config['n_repeats'],
+        hidden_fraction=lambda w: w['hf'],
+        report_every=10,
+        rank=lambda w: params[w['hf']]['rank'],
+        iters=lambda w: params[w['hf']]['iters'],
+        lr=lambda w: params[w['hf']]['lr'],
+        lambda_b=lambda w: params[w['hf']]['lambda_b'],
+        lambda_f=lambda w: params[w['hf']]['lambda_f'],
+        lambda_h=lambda w: params[w['hf']]['lambda_h'],
+        rl_lambda=lambda w: params[w['hf']]['rl_lambda']
+    shell:
+        '''
+        python {run_benchmark} \
+            --hidden_fraction {params.hidden_fraction} \
+            --n_repeats {params.n_repeats} \
+            --results_output {output.results} \
+            --models_output {output.models} \
+            --logfile {log} \
+            KPMF_b \
+            --target_gis {input.gis}\
+            --target_ppi {input.ppi}\
+            --report_every {params.report_every}\
+            --rank {params.rank}\
+            --iters {params.iters}\
+            --lr {params.lr}\
+            --lambda_b {params.lambda_b}\
+            --lambda_f {params.lambda_f}\
+            --lambda_h {params.lambda_h}\
+            --rl_lambda {params.rl_lambda}
+        '''
+
+
+rule ngmc:
+    input:
+        gis=data_paths['gis'][config['tgt_gis']],
+        ppi= lambda _ : data_paths['ppi'][config['tgt_ppi']]
+    output:
+        results=results.format(alg='NGMC', hf='{hf}'),
+        models=models_pkl.format(alg='NGMC', hf='{hf}'),
+    log:
+        log.format(alg='NGMC', hf='{hf}')
+    params:
+        n_repeats = config['n_repeats'],
+        hidden_fraction=lambda w: w['hf'],
+        report_every=10,
+        rank=lambda w: params[w['hf']]['rank'],
+        iters=lambda w: params[w['hf']]['iters'],
+        lr=lambda w: params[w['hf']]['lr'],
+        alpha_p=lambda w: params[w['hf']]['alpha_p'], # P learning rate
+        lambda_f=lambda w: params[w['hf']]['lambda_f'],
+        lambda_h=lambda w: params[w['hf']]['lambda_h'],
+        lambda_p=lambda w: params[w['hf']]['lambda_p'],
+    shell:
+        '''
+        python {run_benchmark} \
+            --hidden_fraction {params.hidden_fraction} \
+            --n_repeats {params.n_repeats} \
+            --results_output {output.results} \
+            --models_output {output.models} \
+            --logfile {log} \
+            NGMC \
+            --target_gis {input.gis}\
+            --target_ppi {input.ppi}\
+            --report_every {params.report_every}\
+            --rank {params.rank}\
+            --iters {params.iters}\
+            --lr {params.lr}\
+            --alpha_p {params.alpha_p}\
+            --lambda_f {params.lambda_f}\
+            --lambda_h {params.lambda_h}\
+            --lambda_p {params.lambda_p}\
+        '''
+
+# rule xsmf:
+#     input:
+#         tgt_gis=data_paths['gis'][config['tgt_gis']],
+#         src_gis=lambda _ : data_paths['gis'][config['src_gis']],
+#         homs=lambda _ : data_paths['homologs'][config['homologs']]
+#     output:
+#         results=results.format(alg='XSMF'),
+#         models=models_pkl.format(alg='XSMF'),
+#     log:
+#         log.format(alg='XSMF')
+#     params:
+#         n_repeats = config['n_repeats'],
+#         hidden_fraction=config['hidden_fraction'],
+#         report_every=params['report_every'],
+#         rank=params['rank'],
+#         iters=params['iters'],
+#         lr=params['lr'],
+#         lambda_hom=params.get('lambda_hom'),
+#         lambda_source=params.get('lambda_source'),
+#         lambda_u=params.get('lambda_u'),
+#         lambda_us=params.get('lambda_us'),
+#         lambda_v=params.get('lambda_v'),
+#         lambda_vs=params.get('lambda_vs'),
+
+#     shell:
+#         '''
+#         python {run_benchmark} \
+#             --hidden_fraction {params.hidden_fraction} \
+#             --n_repeats {params.n_repeats} \
+#             --results_output {output.results} \
+#             --models_output {output.models} \
+#             --logfile {log} \
+#             XSMF \
+#             --target_gis {input.tgt_gis}\
+#             --source_gis {input.src_gis}\
+#             --homologs {input.homs}\
+#             --report_every {params.report_every}\
+#             --rank {params.rank}\
+#             --iters {params.iters}\
+#             --lr {params.lr}\
+#             --lambda_hom {params.lambda_hom}\
+#             --lambda_source {params.lambda_source}\
+#             --lambda_u {params.lambda_u}\
+#             --lambda_us {params.lambda_us}\
+#             --lambda_v {params.lambda_v}\
+#             --lambda_vs {params.lambda_vs}
+#         '''
+
+# rule kxsmf:
+#     input:
+#         tgt_gis=data_paths['gis'][config['tgt_gis']],
+#         src_gis=lambda _ : data_paths['gis'][config['src_gis']],
+#         tgt_ppi=lambda _ : data_paths['ppi'][config['tgt_ppi']],
+#         src_ppi=lambda _ : data_paths['ppi'][config['src_ppi']],
+
+#         homs=lambda _ : data_paths['homologs'][config['homologs']]
+#     output:
+#         results=results.format(alg='KXSMF'),
+#         models=models_pkl.format(alg='KXSMF'),
+#     log:
+#         log.format(alg='KXSMF')
+#     params:
+#         n_repeats = config['n_repeats'],
+#         hidden_fraction=config['hidden_fraction'],
+#         report_every=params['report_every'],
+#         rank=params['rank'],
+#         iters=params['iters'],
+#         lr=params['lr'],
+#         lambda_hom=params.get('lambda_hom'),
+#         lambda_source=params.get('lambda_source'),
+#         lambda_u=params.get('lambda_u'),
+#         lambda_us=params.get('lambda_us'),
+#         lambda_v=params.get('lambda_v'),
+#         lambda_vs=params.get('lambda_vs'),
+#         lambda_tgt_rl=params.get('lambda_tgt_rl'),
+#         lambda_src_rl=params.get('lambda_src_rl'),
+
+#     shell:
+#         '''
+#         python {run_benchmark} \
+#             --hidden_fraction {params.hidden_fraction} \
+#             --n_repeats {params.n_repeats} \
+#             --results_output {output.results} \
+#             --models_output {output.models} \
+#             --logfile {log} \
+#             KXSMF \
+#             --target_gis {input.tgt_gis}\
+#             --source_gis {input.src_gis}\
+#             --target_ppi {input.tgt_ppi}\
+#             --source_ppi {input.src_ppi}\
+#             --homologs {input.homs}\
+#             --report_every {params.report_every}\
+#             --rank {params.rank}\
+#             --iters {params.iters}\
+#             --lr {params.lr}\
+#             --lambda_hom {params.lambda_hom}\
+#             --lambda_source {params.lambda_source}\
+#             --lambda_u {params.lambda_u}\
+#             --lambda_us {params.lambda_us}\
+#             --lambda_v {params.lambda_v}\
+#             --lambda_vs {params.lambda_vs}\
+#             --lambda_tgt_rl {params.lambda_tgt_rl}\
+#             --lambda_src_rl {params.lambda_src_rl}
+#         '''
+
+rule xsmf2:
+    input:
+        tgt_gis=data_paths['gis'][config['tgt_gis']],
+        src_gis=lambda _ : data_paths['gis'][config['src_gis']],
+        sim_scores=lambda _ : data_paths['sim_scores'][config['sim_scores']],
+    output:
+        results=results.format(alg='XSMF2', hf='{hf}'),
+        models=models_pkl.format(alg='XSMF2', hf='{hf}'),
+    log:
+        log.format(alg='XSMF2', hf='{hf}')
+    params:
+        n_repeats = config['n_repeats'],
+        hidden_fraction=lambda w: w['hf'],
+        report_every=10,
+        rank=lambda w: params[w['hf']]['rank'],
+        iters=lambda w: params[w['hf']]['iters'],
+        lr=lambda w: params[w['hf']]['lr'],
+        lambda_sim=lambda w: params[w['hf']]['lambda_sim'],
+        lambda_src=lambda w: params[w['hf']]['lambda_src'],
+        lambda_u=lambda w: params[w['hf']]['lambda_u'],
+        lambda_us=lambda w: params[w['hf']]['lambda_us'],
+        lambda_v=lambda w: params[w['hf']]['lambda_v'],
+        lambda_vs=lambda w: params[w['hf']]['lambda_vs'],
+
+    shell:
+        '''
+        python {run_benchmark} \
+            --hidden_fraction {params.hidden_fraction} \
+            --n_repeats {params.n_repeats} \
+            --results_output {output.results} \
+            --models_output {output.models} \
+            --logfile {log} \
+            XSMF2 \
+            --target_gis {input.tgt_gis}\
+            --source_gis {input.src_gis}\
+            --sim_scores {input.sim_scores}\
+            --report_every {params.report_every}\
+            --rank {params.rank}\
+            --iters {params.iters}\
+            --lr {params.lr}\
+            --lambda_sim {params.lambda_sim}\
+            --lambda_src {params.lambda_src}\
+            --lambda_u {params.lambda_u}\
+            --lambda_us {params.lambda_us}\
+            --lambda_v {params.lambda_v}\
+            --lambda_vs {params.lambda_vs}
+        '''
+
+
+rule kxsmf2:
+    input:
+        tgt_gis=data_paths['gis'][config['tgt_gis']],
+        src_gis=lambda _ : data_paths['gis'][config['src_gis']],
+        sim_scores=lambda _ : data_paths['sim_scores'][config['sim_scores']],
+        tgt_ppi=lambda _ : data_paths['ppi'][config['tgt_ppi']],
+        src_ppi=lambda _ : data_paths['ppi'][config['src_ppi']],
+    output:
+        results=results.format(alg='KXSMF2', hf='{hf}'),
+        models=models_pkl.format(alg='KXSMF2', hf='{hf}'),
+    log:
+        log.format(alg='KXSMF2', hf='{hf}')
+    params:
+        n_repeats = config['n_repeats'],
+        hidden_fraction=lambda w: w['hf'],
+        report_every=10,
+        rank=lambda w: params[w['hf']]['rank'],
+        iters=lambda w: params[w['hf']]['iters'],
+        lr=lambda w: params[w['hf']]['lr'],
+        lambda_sim=lambda w: params[w['hf']]['lambda_sim'],
+        lambda_src=lambda w: params[w['hf']]['lambda_src'],
+        lambda_u=lambda w: params[w['hf']]['lambda_u'],
+        lambda_us=lambda w: params[w['hf']]['lambda_us'],
+        lambda_v=lambda w: params[w['hf']]['lambda_v'],
+        lambda_vs=lambda w: params[w['hf']]['lambda_vs'],
+        lambda_src_rl=lambda w: params[w['hf']]['lambda_src_rl'],
+        lambda_tgt_rl=lambda w: params[w['hf']]['lambda_tgt_rl'],
+
+    shell:
+        '''
+        python {run_benchmark} \
+            --hidden_fraction {params.hidden_fraction} \
+            --n_repeats {params.n_repeats} \
+            --results_output {output.results} \
+            --models_output {output.models} \
+            --logfile {log} \
+            KXSMF2 \
+            --target_gis {input.tgt_gis}\
+            --source_gis {input.src_gis}\
+            --target_ppi {input.tgt_ppi}\
+            --source_ppi {input.src_ppi}\
+            --sim_scores {input.sim_scores}\
+            --report_every {params.report_every}\
+            --rank {params.rank}\
+            --iters {params.iters}\
+            --lr {params.lr}\
+            --lambda_sim {params.lambda_sim}\
+            --lambda_src {params.lambda_src}\
+            --lambda_u {params.lambda_u}\
+            --lambda_us {params.lambda_us}\
+            --lambda_v {params.lambda_v}\
+            --lambda_vs {params.lambda_vs}\
+            --lambda_tgt_rl {params.lambda_tgt_rl}\
+            --lambda_src_rl {params.lambda_src_rl}
+        '''
+
+
+rule kxsmf2_b:
+    input:
+        tgt_gis=data_paths['gis'][config['tgt_gis']],
+        src_gis=lambda _ : data_paths['gis'][config['src_gis']],
+        sim_scores=lambda _ : data_paths['sim_scores'][config['sim_scores']],
+        tgt_ppi=lambda _ : data_paths['ppi'][config['tgt_ppi']],
+        src_ppi=lambda _ : data_paths['ppi'][config['src_ppi']],
+    output:
+        results=results.format(alg='KXSMF2-b', hf='{hf}'),
+        models=models_pkl.format(alg='KXSMF2-b', hf='{hf}'),
+    log:
+        log.format(alg='KXSMF2-b', hf='{hf}')
+    params:
+        n_repeats = config['n_repeats'],
+        hidden_fraction=lambda w: w['hf'],
+        report_every=10,
+        rank=lambda w: params[w['hf']]['rank'],
+        iters=lambda w: params[w['hf']]['iters'],
+        lr=lambda w: params[w['hf']]['lr'],
+        lambda_b=lambda w: params[w['hf']]['lambda_b'],
+        lambda_sim=lambda w: params[w['hf']]['lambda_sim'],
+        lambda_src=lambda w: params[w['hf']]['lambda_src'],
+        lambda_u=lambda w: params[w['hf']]['lambda_u'],
+        lambda_us=lambda w: params[w['hf']]['lambda_us'],
+        lambda_v=lambda w: params[w['hf']]['lambda_v'],
+        lambda_vs=lambda w: params[w['hf']]['lambda_vs'],
+        lambda_src_rl=lambda w: params[w['hf']]['lambda_src_rl'],
+        lambda_tgt_rl=lambda w: params[w['hf']]['lambda_tgt_rl'],
+
+    shell:
+        '''
+        python {run_benchmark} \
+            --hidden_fraction {params.hidden_fraction} \
+            --n_repeats {params.n_repeats} \
+            --results_output {output.results} \
+            --models_output {output.models} \
+            --logfile {log} \
+            KXSMF2_b \
+            --target_gis {input.tgt_gis}\
+            --source_gis {input.src_gis}\
+            --target_ppi {input.tgt_ppi}\
+            --source_ppi {input.src_ppi}\
+            --sim_scores {input.sim_scores}\
+            --report_every {params.report_every}\
+            --rank {params.rank}\
+            --iters {params.iters}\
+            --lr {params.lr}\
+            --lambda_b {params.lambda_b}\
+            --lambda_sim {params.lambda_sim}\
+            --lambda_src {params.lambda_src}\
+            --lambda_u {params.lambda_u}\
+            --lambda_us {params.lambda_us}\
+            --lambda_v {params.lambda_v}\
+            --lambda_vs {params.lambda_vs}\
+            --lambda_tgt_rl {params.lambda_tgt_rl}\
+            --lambda_src_rl {params.lambda_src_rl}
+        '''

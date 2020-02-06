@@ -1,0 +1,118 @@
+from os.path import join
+import yaml
+with open('data.yml') as IN:
+    data_paths = yaml.safe_load(IN)
+
+SRC_DIR = '../../src'
+run_kxsmf = join(SRC_DIR, 'run_kxsmf2_hp.py')
+
+exp_name = 'tgt={tgt}_src={src}_sims={sims}_tgt-ppi={tgt_ppi}_src-ppi={src_ppi}_hf{{hf}}_vf{vf}_cv{cv}_hp{hp}'
+exp_name = exp_name.format(tgt=config['tgt'],
+                           src=config['src'],
+                           sims=config['sim_scores'],
+                           tgt_ppi=config['tgt-ppi'],
+                           src_ppi=config['src-ppi'],
+                           #hf=config['hidden-fraction'],
+                           vf=config['validation-fraction'],
+                           cv=config['n-repeats'],
+                           hp=config['n-hyperopt-iters'])
+output_dir = join('output', exp_name)
+results = join(output_dir, '{}-results.json'.format(exp_name))
+training_curve_pkl = join(output_dir, '{}_training_curves.pkl'.format(exp_name))
+models_pkl = join(output_dir, '{}_models.pkl'.format(exp_name))
+trials_pkl = join(output_dir, '{}_trials.pkl'.format(exp_name))
+log = join(output_dir, '{}-log.txt'.format(exp_name))
+
+rule all:
+    input:
+        expand(results, hf=[0.25, 0.5, 0.75, 0.9])
+        #expand(results, hf=[0.25])
+
+
+rule once:
+    input:
+        tgt = data_paths['gis'][config['tgt']],
+        src = data_paths['gis'][config['src']],
+        tgt_ppi = data_paths['ppi'][config['tgt-ppi']],
+        src_ppi = data_paths['ppi'][config['src-ppi']],
+        sims = data_paths['blast'][config['sim_scores']],
+    output:
+        results=results,
+        training_curve=training_curve_pkl,
+        models=models_pkl,
+        trials=trials_pkl,
+    log:
+        log
+    params:
+        n_repeats = config['n-repeats'],
+        n_hyperopt_iters = config['n-hyperopt-iters'],
+        hidden_fraction = lambda w: w['hf'],
+        val_hidden_fraction = config['validation-fraction'],
+        random_seed = config.get('random-seed', 47951),
+
+        report_every = config['report_every'],
+        max_iter = config['max_iter'],
+        early_stop = config['early_stop'],
+        rank = config['rank'],
+        rank_step = config['rank_step'],
+
+        lambda_tgt_rl = config['lambda_tgt_rl'],
+        lambda_src_rl = config['lambda_src_rl'],
+        lambda_sim = config['lambda_sim'],
+        lambda_source = config['lambda_source'],
+        lambda_u = config['lambda_u'],
+        lambda_v = config['lambda_v'],
+        lambda_us = config['lambda_us'],
+        lambda_vs = config['lambda_vs'],
+        lr = config['lr']
+    shell:
+        '''
+        python {run_kxsmf} \
+            --target_gis {input.tgt}\
+            --source_gis {input.src}\
+            --target_ppi {input.tgt_ppi}\
+            --source_ppi {input.src_ppi}\
+            --sim_scores {input.sims}\
+            --results_output {output.results}\
+            --training_curve_output {output.training_curve}\
+            --models {output.models}\
+            --trials {output.trials}\
+            --logfile {log}\
+            --n_repeats {params.n_repeats}\
+            --n_hyperopt_iters {params.n_hyperopt_iters}\
+            --hidden_fraction {params.hidden_fraction}\
+            --val_hidden_fraction {params.val_hidden_fraction}\
+            --random_seed {params.random_seed}\
+            --report_every {params.report_every}\
+            --max_iter {params.max_iter}\
+            --early_stop {params.early_stop}\
+            --rank {params.rank}\
+            --rank_step {params.rank_step}\
+            --lambda_tgt_rl {params.lambda_tgt_rl}\
+            --lambda_src_rl {params.lambda_src_rl}\
+            --lambda_sim {params.lambda_sim}\
+            --lambda_source {params.lambda_source}\
+            --lambda_u {params.lambda_u}\
+            --lambda_v {params.lambda_v}\
+            --lambda_us {params.lambda_us}\
+            --lambda_vs {params.lambda_vs}\
+            --lr {params.lr}
+        '''
+
+rule dev:
+    input:
+        tgt=data_paths['gis']['ryan'],
+        src=data_paths['gis']['costanzo10'],
+        blast=data_paths['blast']['ryan-costanzo'],
+        script=join(SRC_DIR, 'xsmf2.py')
+    log:
+        'log.txt'
+    shell:
+        '''
+        python {input.script} \
+            --target_gis {input.tgt} \
+            --source_gis {input.src} \
+            --sim_scores {input.blast} \
+            --results_output tmp.txt \
+            -log  {log}
+        ''' 

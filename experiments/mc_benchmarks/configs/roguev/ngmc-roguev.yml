@@ -1,0 +1,38 @@
+algorithm: NGMC
+tgt_gis: roguev
+tgt_ppi: sp-biogrid
+n_repeats: 10
+
+params:
+  '0.25':
+    lr: 0.201
+    alpha_p: 0.002
+    lambda_f: 0.043
+    lambda_h: 0.055
+    lambda_p: 0.023
+    iters: 500
+    rank: 70
+  '0.5':
+    lr: 0.210
+    alpha_p: 0.002
+    lambda_f: 0.033
+    lambda_h: 0.058
+    lambda_p: 0.024
+    iters: 500
+    rank: 80
+  '0.75':
+    lr: 0.171
+    alpha_p: 0.003
+    lambda_f: 0.030
+    lambda_h: 0.037
+    lambda_p: 0.051
+    iters: 500
+    rank: 85
+  '0.9':
+    lr: 0.213
+    alpha_p: 0.004
+    lambda_f: 0.012 
+    lambda_h: 0.012
+    lambda_p: 0.022
+    iters: 500
+    rank: 85

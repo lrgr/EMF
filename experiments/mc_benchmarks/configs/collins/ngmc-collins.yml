@@ -1,0 +1,38 @@
+algorithm: NGMC
+tgt_gis: collins
+tgt_ppi: sc-biogrid
+n_repeats: 10
+
+params:
+  '0.25':
+    lr: 0.241
+    alpha_p: 0.002
+    lambda_f: 0.036
+    lambda_h: 0.133
+    lambda_p: 0.011
+    iters: 500
+    rank: 50
+  '0.5':
+    lr: 0.175
+    alpha_p: 0.003
+    lambda_f: 0.044 
+    lambda_h: 0.134
+    lambda_p: 0.012
+    iters: 500
+    rank: 55
+  '0.75':
+    lr: 0.164
+    alpha_p: 0.001
+    lambda_f: 0.012 
+    lambda_h: 0.095
+    lambda_p: 0.029
+    iters: 500
+    rank: 70
+  '0.9':
+    lr: 0.123
+    alpha_p: 0.001
+    lambda_f: 0.043 
+    lambda_h: 0.022
+    lambda_p: 0.047
+    iters: 500
+    rank: 85

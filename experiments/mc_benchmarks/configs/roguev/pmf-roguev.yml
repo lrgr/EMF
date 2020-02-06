@@ -1,0 +1,25 @@
+algorithm: PMF
+tgt_gis: roguev
+n_repeats: 10
+
+params:
+  '0.25':
+    rank: 95
+    iters: 58
+    lr: 0.222
+    lambda: 8.871
+  '0.5':
+    rank: 85
+    iters: 36
+    lr: 0.101
+    lambda: 10.677
+  '0.75':
+    rank: 80
+    iters: 40
+    lr: 0.196
+    lambda: 9.430
+  '0.9':
+    rank: 85
+    iters: 24
+    lr: 0.105
+    lambda: 10.524

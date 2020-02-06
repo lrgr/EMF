@@ -1,0 +1,22 @@
+tgt: roguev
+src: collins
+sim_scores: roguev-collins
+validation-fraction: 0.1
+n-repeats: 1
+n-hyperopt-iters: 50
+
+# fixed params
+report_every: 50
+max_iter: 500
+early_stop: 5
+
+# params for hyperopts
+rank: [50, 100]
+rank_step: 5
+lambda_source: [0.1, 1.0]
+lambda_sim: [0.1, 2]
+lambda_u:  [5, 15]
+lambda_v:  [5, 15]
+lambda_us: [5, 15]
+lambda_vs: [5, 15]
+lr: [0.1, 0.5]

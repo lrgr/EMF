@@ -1,0 +1,34 @@
+algorithm: KPMF
+tgt_gis: collins
+tgt_ppi: sc-biogrid
+n_repeats: 10
+
+params:
+  '0.25':
+    lambda_f: 13.781
+    lambda_h: 13.655
+    lr: 0.444
+    iters: 56
+    rank: 95
+    rl_lambda: 0.399 
+  '0.5':
+    lambda_f: 10.972
+    lambda_h: 13.373
+    lr: 0.296
+    iters: 62
+    rank: 90
+    rl_lambda: 0.386
+  '0.75':
+    lambda_f: 12.490
+    lambda_h: 5.179
+    lr: 0.125
+    iters: 48
+    rank: 90
+    rl_lambda: 0.369 
+  '0.9':
+    lambda_f: 12.956
+    lambda_h: 6.743
+    lr: 0.114
+    iters: 34
+    rank: 90
+    rl_lambda: 0.353 

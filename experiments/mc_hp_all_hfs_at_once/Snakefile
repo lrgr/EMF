@@ -1,0 +1,267 @@
+from os.path import join
+# Function for generating arguments to subparser
+import yaml
+def gen_params(param_dict):
+    arguments = []
+    for k, v in param_dict.items():
+        fmt = '--{} {}'
+        if isinstance(v, list):
+            args = ' '.join([str(i) for i in v])
+        else:
+            args = str(v)
+        arguments.append(fmt.format(k, args))
+    return ' '.join(arguments)
+
+with open('data.yml') as IN:
+    data_paths = yaml.safe_load(IN)
+
+if config['algorithm'] == 'NGMC':
+    config['logistic'] = True
+
+exp_name = 'gi={gi}_ppi={ppi}_hf{{hf}}_{{alg}}_lg={lg}_vf{vf}_cv{cv}_hp{hp}'
+exp_name = exp_name.format(gi=config['gis'],
+                            ppi=config['ppi'] if config.get('ppi', None) else 'X',
+                            # hf=config['hidden_fraction'],
+                            lg='T' if config['logistic'] else 'F',
+                            vf=config['val_hidden_fraction'],
+                            cv=config['n_repeats'],
+                            hp=config['n_hyperopt_iters'])
+
+# output_dir = join('output', exp_name)
+output_dir = join('output_tmp', exp_name)
+
+run_mc = '../../src/run_mf_hp.py'
+results = join(output_dir, '{}-results.json'.format(exp_name))
+training_curve_pkl = join(output_dir, '{}_training_curves.pkl'.format(exp_name))
+models_pkl = join(output_dir, '{}_models.pkl'.format(exp_name))
+trials_pkl = join(output_dir, '{}_trials.pkl'.format(exp_name))
+log = join(output_dir, '{}-log.txt'.format(exp_name))
+
+plot_tr_curves = '../../src/plot_tr_curve.py'
+training_curve_plot = join(output_dir, '{}_training_curves_plot.pdf'.format(exp_name))
+
+# hidden_fracs = [0.90, 0.75, 0.50, 0.25]
+hidden_fracs = [0.90]
+
+rule all:
+    input:
+        expand(results, alg=config['algorithm'], hf=hidden_fracs),
+        expand(training_curve_pkl, alg=config['algorithm'], hf=hidden_fracs),
+        expand(log, alg=config['algorithm'], hf=hidden_fracs),
+        expand(training_curve_plot, alg=config['algorithm'], hf=hidden_fracs)
+
+# rule tr_curve:
+#     input:
+#         training_curve_plot.format(alg=config['algorithm'])
+
+_KPMF_b = 'KPMF_b'
+rule kpmf_b:
+    input:
+        script=run_mc,
+        gis=data_paths['gis'][config['gis']],
+        ppi=lambda w: data_paths['ppi'][config['ppi']],
+    output:
+        results=results.format(alg=_KPMF_b, hf='{hf}'),
+        tc=training_curve_pkl.format(alg=_KPMF_b, hf='{hf}'),
+        models=models_pkl.format(alg=_KPMF_b, hf='{hf}'),
+        trials=trials_pkl.format(alg=_KPMF_b, hf='{hf}')
+    params:
+        subparser = _KPMF_b,
+        n_repeats = config['n_repeats'],
+        n_hyperopt_iters = config['n_hyperopt_iters'],
+        val_hidden_fraction=config['val_hidden_fraction'],
+        hidden_fraction=lambda w: w['hf'],
+        param_space=gen_params(config['param_space']),
+        logistic= '--logistic' if config['logistic'] else '',
+    log:
+        log.format(alg=_KPMF_b, hf='{hf}')
+    shell:
+        '''
+        python {input.script} \
+            --input_file {input.gis} \
+            --results_output {output.results} \
+            --training_curve_output {output.tc} \
+            --models_output {output.models} \
+            --trials_output {output.trials} \
+            --logfile {log} \
+            --n_repeats {params.n_repeats} \
+            --n_hyperopt_iters {params.n_hyperopt_iters} \
+            --val_hidden_fraction {params.val_hidden_fraction}\
+            --hidden_fraction {params.hidden_fraction}\
+            {params.logistic} \
+            {params.subparser} \
+            {params.param_space} \
+            --ppi {input.ppi}
+        '''
+
+_KPMF = 'KPMF'
+rule kpmf:
+    input:
+        script=run_mc,
+        gis=data_paths['gis'][config['gis']],
+        ppi=lambda w: data_paths['ppi'][config['ppi']],
+    output:
+        results=results.format(alg=_KPMF, hf='{hf}'),
+        tc=training_curve_pkl.format(alg=_KPMF, hf='{hf}'),
+        models=models_pkl.format(alg=_KPMF, hf='{hf}'),
+        trials=trials_pkl.format(alg=_KPMF, hf='{hf}')
+    params:
+        subparser = _KPMF,
+        n_repeats = config['n_repeats'],
+        n_hyperopt_iters = config['n_hyperopt_iters'],
+        val_hidden_fraction=config['val_hidden_fraction'],
+        hidden_fraction=lambda w: w['hf'],
+        param_space=gen_params(config['param_space']),
+        logistic= '--logistic' if config['logistic'] else '',
+    log:
+        log.format(alg=_KPMF, hf='{hf}')
+    shell:
+        '''
+        python {input.script} \
+            --input_file {input.gis} \
+            --results_output {output.results} \
+            --training_curve_output {output.tc} \
+            --models_output {output.models} \
+            --trials_output {output.trials} \
+            --logfile {log} \
+            --n_repeats {params.n_repeats} \
+            --n_hyperopt_iters {params.n_hyperopt_iters} \
+            --val_hidden_fraction {params.val_hidden_fraction}\
+            --hidden_fraction {params.hidden_fraction}\
+            {params.logistic} \
+            {params.subparser} \
+            {params.param_space} \
+            --ppi {input.ppi}
+        '''
+
+_PMF = 'PMF'
+rule pmf:
+    input:
+        script=run_mc,
+        gis=data_paths['gis'][config['gis']],
+    output:
+        results=results.format(alg=_PMF, hf='{hf}'),
+        tc=training_curve_pkl.format(alg=_PMF, hf='{hf}'),
+        models=models_pkl.format(alg=_PMF, hf='{hf}'),
+        trials=trials_pkl.format(alg=_PMF, hf='{hf}')
+    params:
+        subparser = _PMF,
+        n_repeats = config['n_repeats'],
+        n_hyperopt_iters = config['n_hyperopt_iters'],
+        val_hidden_fraction=config['val_hidden_fraction'],
+        hidden_fraction=lambda w: w['hf'],
+        param_space=gen_params(config['param_space']),
+        logistic= '--logistic' if config['logistic'] else '',
+    log:
+        log.format(alg=_PMF, hf='{hf}')
+    shell:
+        '''
+        python {input.script} \
+            --input_file {input.gis} \
+            --results_output {output.results} \
+            --training_curve_output {output.tc} \
+            --models_output {output.models} \
+            --trials_output {output.trials} \
+            --logfile {log} \
+            --n_repeats {params.n_repeats} \
+            --n_hyperopt_iters {params.n_hyperopt_iters} \
+            --val_hidden_fraction {params.val_hidden_fraction}\
+            --hidden_fraction {params.hidden_fraction}\
+            {params.logistic} \
+            {params.subparser} \
+            {params.param_space} \
+        '''
+
+_PMF_b = 'PMF_b'
+rule pmfb:
+    input:
+        script=run_mc,
+        gis=data_paths['gis'][config['gis']],
+    output:
+        results=results.format(alg=_PMF_b, hf='{hf}'),
+        tc=training_curve_pkl.format(alg=_PMF_b, hf='{hf}'),
+        models=models_pkl.format(alg=_PMF_b, hf='{hf}'),
+        trials=trials_pkl.format(alg=_PMF_b, hf='{hf}')
+    params:
+        subparser = _PMF_b,
+        n_repeats = config['n_repeats'],
+        n_hyperopt_iters = config['n_hyperopt_iters'],
+        val_hidden_fraction=config['val_hidden_fraction'],
+        hidden_fraction=lambda w: w['hf'],
+        param_space=gen_params(config['param_space']),
+        logistic= '--logistic' if config['logistic'] else '',
+    log:
+        log.format(alg=_PMF_b, hf='{hf}')
+    shell:
+        '''
+        python {input.script} \
+            --input_file {input.gis} \
+            --results_output {output.results} \
+            --training_curve_output {output.tc} \
+            --models_output {output.models} \
+            --trials_output {output.trials} \
+            --logfile {log} \
+            --n_repeats {params.n_repeats} \
+            --n_hyperopt_iters {params.n_hyperopt_iters} \
+            --val_hidden_fraction {params.val_hidden_fraction}\
+            --hidden_fraction {params.hidden_fraction}\
+            {params.logistic} \
+            {params.subparser} \
+            {params.param_space} \
+        '''
+
+_NGMC = 'NGMC'
+rule ngmc:
+    input:
+        script=run_mc,
+        gis=data_paths['gis'][config['gis']],
+    output:
+        results=results.format(alg=_NGMC, hf='{hf}'),
+        tc=training_curve_pkl.format(alg=_NGMC, hf='{hf}'),
+        models=models_pkl.format(alg=_NGMC, hf='{hf}'),
+        trials=trials_pkl.format(alg=_NGMC, hf='{hf}')
+    params:
+        subparser = _NGMC,
+        n_repeats = config['n_repeats'],
+        n_hyperopt_iters = config['n_hyperopt_iters'],
+        val_hidden_fraction=config['val_hidden_fraction'],
+        hidden_fraction=lambda w: w['hf'],
+        param_space=gen_params(config['param_space']),
+        ppi_params = '--ppi {}'.format(data_paths['ppi'][config['ppi']]) if 'ppi' in config else ''
+    log:
+        log.format(alg=_NGMC, hf='{hf}')
+    shell:
+        '''
+        python {input.script} \
+            --input_file {input.gis} \
+            --results_output {output.results} \
+            --training_curve_output {output.tc} \
+            --models_output {output.models} \
+            --trials_output {output.trials} \
+            --logfile {log} \
+            --n_repeats {params.n_repeats} \
+            --n_hyperopt_iters {params.n_hyperopt_iters} \
+            --val_hidden_fraction {params.val_hidden_fraction}\
+            --hidden_fraction {params.hidden_fraction}\
+            --logistic \
+            {params.subparser} \
+            {params.param_space} \
+            {params.ppi_params}
+        '''
+
+rule plot_tr_curves:
+    input:
+        script=plot_tr_curves,
+        curves=training_curve_pkl
+    output:
+        training_curve_plot
+    params:
+        title = lambda w: exp_name.format(alg=w['alg'], hf=w['hf'])
+    shell:
+        '''
+        python {input.script} \
+            --training_curves {input.curves} \
+            --names {wildcards.alg} \
+            --title {params.title} \
+            --output {output}
+        '''

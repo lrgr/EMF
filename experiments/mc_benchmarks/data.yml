@@ -1,0 +1,21 @@
+gis:
+  collins: ../../data/gi/output/collins_et_al/collins_et_al-dels_only.cpkl
+  roguev: ../../data/gi/output/roguev_et_al/roguev_et_al-dels_only.cpkl
+  ryan: ../../data/gi/output/ryan_et_al_2012/ryan_2012_sp_gis.cpkl
+  costanzo10: ../../data/gi/output/costanzo_et_al_2010/costanzo2010-GI_score.cpkl
+ppi:
+  sc-biogrid: ../../data/ppi/output/sc-biogrid.v3.5.174-ppi.tsv
+  sp-biogrid: ../../data/ppi/output/sp-biogrid.v3.5.174-ppi.tsv
+homologs:
+  sp-sc: ../../data/gi/output/roguev_et_al/sp-sc-homs.tsv
+  sc-sp: ../../data/gi/output/roguev_et_al/sc-sp-homs.tsv
+  costanzo10-ryan12: ../../data/gi/output/homologs/costanzo10-cols_ryan12-cols_homologs.tsv
+  ryan12-costanz10: ../../data/gi/output/homologs/ryan12-cols_costanzo10-cols_homologs.tsv
+sim_scores:
+    # sp-sc: ../../data/blast/output/processed/sp-to-sc-blast-3std.tsv
+    # sp-sc_all: ../../data/blast/output/processed/sp-to-sc-blast-0std.tsv
+    # sc-sp: ../../data/blast/output/processed/sc-to-sp-blast-3std.tsv
+    roguev-collins: ../../data/blast/output/gi_specific_scores/roguev-collins-blast_scores.cpkl
+    collins-roguev: ../../data/blast/output/gi_specific_scores/src=roguev-tgt=collins-blast_scores.cpkl
+    ryan-costanzo: ../../data/blast/output/gi_specific_scores/ryan-costanzo10-blast_scores.cpkl
+    costanzo-ryan: ../../data/blast/output/gi_specific_scores/src=ryan-tgt=costanzo10-blast_scores.cpkl

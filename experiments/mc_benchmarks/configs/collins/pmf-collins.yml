@@ -1,0 +1,25 @@
+algorithm: PMF
+tgt_gis: collins
+n_repeats: 10
+
+params:
+  '0.25':
+    rank: 80
+    iters: 63
+    lr: 0.194
+    lambda: 14.534
+  '0.5':
+    rank: 90
+    iters: 65
+    lr: 0.213
+    lambda: 12.929
+  '0.75':
+    rank: 95
+    iters: 30
+    lr: 0.100
+    lambda: 10.876
+  '0.9':
+    rank: 85
+    iters: 36
+    lr: 0.178
+    lambda: 10.941

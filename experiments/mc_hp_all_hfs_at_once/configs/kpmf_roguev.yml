@@ -1,0 +1,16 @@
+algorithm: KPMF
+gis: roguev
+ppi: sp-biogrid
+val_hidden_fraction: 0.1
+n_repeats: 1
+n_hyperopt_iters: 50
+logistic: False
+param_space:
+  rank_range: [50, 100]
+  rank_step: 5
+  max_iter: 500
+  lr_range: [0.1, 0.5]
+  early_stop: 5
+  lambda_f_range: [5, 15]
+  lambda_h_range: [5, 15]
+  rl_lambda_range: [0.1, 1.0]

@@ -1,0 +1,62 @@
+algorithm: KXSMF2-b
+tgt_gis: costanzo10
+src_gis: ryan
+sim_scores: costanzo-ryan
+tgt_ppi: sc-biogrid
+src_ppi: sp-biogrid
+
+n_repeats: 10
+
+params:
+  '0.25':
+    lambda_b: 0.553
+    lambda_sim: 6.498
+    lambda_src: 0.325
+    lambda_src_rl: 0.325
+    lambda_tgt_rl: 0.100
+    lambda_u: 15.213
+    lambda_us: 15.495
+    lambda_v: 77.315
+    lambda_vs: 28.079
+    lr: 0.251
+    iters: 378
+    rank: 200
+  '0.5':
+    lambda_b: 0.543 
+    lambda_sim: 0.927
+    lambda_src: 0.602
+    lambda_src_rl: 0.477
+    lambda_tgt_rl: 0.106
+    lambda_u: 31.280
+    lambda_us: 99.386
+    lambda_v: 19.367
+    lambda_vs: 63.281
+    lr: 0.143
+    iters: 500
+    rank: 200
+  '0.75':
+    lambda_b: 0.651 
+    lambda_sim: 1.331
+    lambda_src: 0.100
+    lambda_src_rl: 0.470
+    lambda_tgt_rl: 0.100
+    lambda_u: 35.996
+    lambda_us: 20.523
+    lambda_v: 18.989
+    lambda_vs: 46.158
+    lr: 0.204
+    iters: 500
+    rank: 155
+  '0.9':
+    lambda_b: 0.481 
+    lambda_sim: 2.549
+    lambda_src: 0.403
+    lambda_src_rl: 0.220
+    lambda_tgt_rl: 0.140
+    lambda_u: 16.731
+    lambda_us: 55.832
+    lambda_v: 30.129
+    lambda_vs: 24.046
+    lr: 0.182
+    iters: 240
+    rank: 80
