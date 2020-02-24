@@ -27,11 +27,6 @@ url = "https://obj.umiacs.umd.edu/lrgr/all_vs_all_BLAST/pombase-sgd/sc-to-sp.tsv
 
 rule all:
     input:
-        expand(thresh_scores, thresh=threshs),
-        expand(thresh_scores_swap, thresh=threshs)
-
-rule restrict:
-    input:
         expand(gi_specific_scores, zip, target_gis=['roguev', 'ryan'], source_gis=['collins', 'costanzo10']),
         expand(gi_specific_scores_swap, zip, target_gis=['roguev', 'ryan'], source_gis=['collins', 'costanzo10'])
 
@@ -84,26 +79,6 @@ rule process:
     shell:
         '''
         python blast_tsv_to_matrix.py --input {input} --output {output} | tee {log}
-        '''
-
-rule thresh:
-    input:
-        raw_blast
-    output:
-        thresh_scores
-    shell:
-        '''
-        python blast_tsv_to_3col.py --input {input} --output {output} --thresh {wildcards.thresh}
-        '''
-
-rule thresh_swap:
-    input:
-        raw_blast
-    output:
-        thresh_scores_swap
-    shell:
-        '''
-        python blast_tsv_to_3col.py --input {input} --output {output} --thresh {wildcards.thresh} --swap
         '''
 
 rule download:

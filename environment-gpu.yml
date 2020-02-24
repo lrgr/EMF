@@ -1,4 +1,4 @@
-name: 'gi-gpu'
+name: 'xsmf-gpu'
 channels:
   - defaults
   - bioconda

@@ -1,4 +1,4 @@
-name: 'gi-matrix-completion'
+name: 'xsmf'
 channels:
   - defaults
   - bioconda
