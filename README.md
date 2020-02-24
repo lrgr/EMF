@@ -1,7 +1,7 @@
 # Cross-species Matrix Factorization (XSMF)
 [![GitHub license](https://img.shields.io/github/license/lrgr/xsmf.svg)](https://github.com/lrgr/xsmf/blob/master/LICENSE)
 
-Beta release. XSMF and other baselines are inmplemented with TensorFlow v1.
+Beta release. XSMF and other baselines are implemented with TensorFlow v1.
 
 ## Setup:
 
@@ -10,7 +10,7 @@ We recommend users to install required packages dependencies for the XSMF models
     conda env create -f environment.yml
     source activate xsmf
 
-This `xsmf` Conda environment can be used to run any number of experiments and examples included in this project/repository. We note that experiments and data download for other parts of this project are implemented and configured with [Snakemake](http://snakemake.readthedocs.io/en/stable/) which will be installed as part of the `xsmf` environment.
+The `xsmf` Conda environment can be used to run any number of experiments and examples included in this project/repository. We note that experiments and data download for other parts of this project are implemented and configured with [Snakemake](http://snakemake.readthedocs.io/en/stable/) which will be installed as part of the `xsmf` environment.
 
 ### To run models using GPUs:
 
