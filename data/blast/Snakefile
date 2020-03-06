@@ -9,19 +9,12 @@ raw_blast = 'output/raw/sp-to-sc-blast.tsv'
 dense_blast = 'output/processed/sp-to-sc-blast.cpkl'
 dense_blast_log = 'output/processed/log.txt'
 
-threshs = [0, 3,5,10]
-
-thresh_scores = 'output/processed/sp-to-sc-blast-{thresh}std.tsv'
-thresh_scores_swap = 'output/processed/sc-to-sp-blast-{thresh}std.tsv'
-
 gi_specific_scores = 'output/gi_specific_scores/{target_gis}-{source_gis}-blast_scores.cpkl'
 gi_specific_scores_log = 'output/gi_specific_scores/{target_gis}-{source_gis}-blast_scores.log'
 
-# TODO: fix this
+# Quick dirty way to swap target and source species
 gi_specific_scores_swap = 'output/gi_specific_scores/src={target_gis}-tgt={source_gis}-blast_scores.cpkl'
 gi_specific_scores_log_swap = 'output/gi_specific_scores/src={target_gis}-tgt={source_gis}-blast_scores.log'
-# TODO: fix this
-
 
 url = "https://obj.umiacs.umd.edu/lrgr/all_vs_all_BLAST/pombase-sgd/sc-to-sp.tsv"
 

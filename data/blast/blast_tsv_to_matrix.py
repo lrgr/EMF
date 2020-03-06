@@ -21,6 +21,15 @@ _RAWSCORE = 'RAWSCORE'
 _EVALUE = 'EVALUE'
 
 def main():
+    '''
+    Create dense matrix of scores from TSV of BLAST scores.
+
+    cloudpickled data dictionary has keys:
+        - rows : 1D array of gene names
+        - cols : 1D array of gene nanes
+        - {values, RAWSCORE, EVALUE} : (n_rows, n_cols) 2D array of bitscores, 
+            raw bitscores, and e-values respectively
+    '''
     args = parse_args()
     print('* loading df')
     col_names = [
@@ -34,6 +43,7 @@ def main():
     df.S_ID = df.S_ID.str.upper()
     print(df.head())
 
+    # Turn (gene1, gene2)->[values] into mult-index / 2D matrix of values
     print("\t- pivoting dataframe...")
     df = df.pivot(index=_QSEQID, columns=_SSEQID)
 
@@ -50,42 +60,6 @@ def main():
     print("* Saving to ", args.output)
     with open(args.output, 'wb') as f:
         cpkl.dump(data, f)
-
-    # print('* computing set')
-    # A_scores_only_geneset = set(df['A'].values)
-    # B_scores_only_geneset = set(df['B'].values)
-
-    # A_genes = np.asarray(list(A_scores_only_geneset))
-    # B_genes = np.asarray(list(B_scores_only_geneset))
-
-    # A_n2i = dict((n, i) for i, n in enumerate(A_genes))
-    # B_n2i = dict((n, i) for i, n in enumerate(B_genes))
-
-    # A_idxs = [A_n2i[n] for n in df['A'].values]
-    # B_idxs = [B_n2i[n] for n in df['B'].values]
-    # scores = df['score'].values
-    # print('* making dense matrix')
-    # X = csr_matrix((scores, (A_idxs, B_idxs))).toarray()
-
-    # print('* loading ppis to restrict dense matrix to ppi nodes')
-    # A_ppi_only_geneset = get_ppi_nodes(args.A_ppi)
-    # B_ppi_only_geneset = get_ppi_nodes(args.B_ppi)
-
-    # print('* Taking set intersections to get genes in ppi with scores')
-    # A_genes = list(A_ppi_only_geneset & A_scores_only_geneset)
-    # B_genes = list(B_ppi_only_geneset & B_scores_only_geneset)
-
-    # print('A:', len(A_genes))
-    # print('B:', len(B_genes))
-
-    # A_idxs = [A_n2i[n] for n in A_genes]
-    # B_idxs = [B_n2i[n] for n in B_genes]
-
-    # print('* restricting and saving')
-    # X = X[A_idxs, :][:, B_idxs]
-    # print(X.shape)
-    # joblib.dump(dict(X=X, A_nodes=A_genes,
-    #                  B_nodes=B_genes), args.output)
 
 if __name__ == "__main__":
     main()
