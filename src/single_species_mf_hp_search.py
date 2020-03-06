@@ -9,9 +9,9 @@ import cloudpickle as cpkl
 
 import hyperopt
 from i_o import get_logger, log_dict, setup_logging
-from matrix_completion import KPMF, KPMF_b, PMF, PMF_b, MCScaler, mc_train_test_split
+from matrix_completion import KPMF, KPMF_b, PMF, PMF_b, MCScaler
 from ngmc import NGMC
-from utils import (evaluate_model, check_gi_obj, get_ppi_data, 
+from utils import (evaluate_model, get_ppi_data, 
                    summarize_results, log_results)
 
 from cv import gi_train_test_split
@@ -164,10 +164,8 @@ def run_pmf(X, fit_params, param_space,
     scaler = MCScaler(mode='0-1' if logistic else 'std')
     use_validation=True
     return run_mc_alg(X,
-                    #   fold_objective=pmf_objective_logistic if logistic else pmf_objective,
                       fold_objective=pmf_objective,
                       fit_params=fit_params,
-                    #   retrain_model = train_pmf_logistic if logistic else train_pmf,
                       retrain_model = train_pmf,
                       space=param_space,
                       scaler=scaler,
@@ -641,9 +639,6 @@ def run_mc_alg( gis,
         if X_train.shape == X_train.T.shape and np.allclose(X_train, X_train.T, equal_nan=True):
             log.info('- Data was square, averaging predictions...')
             X_fitted = (X_fitted.T + X_fitted) / 2.
-        #test_mask = ~np.isnan(X_test)
-
-        #test_mask[np.tril_indices(len(test_mask))] = False
 
         results = evaluate_model(X_test[test_mask], X_fitted[test_mask])
         log.info('[Results for fold %i]' % i)
@@ -670,7 +665,6 @@ def run_mc_alg( gis,
 #                           MAIN
 ###############################################################################
 def main():
-    # tf.enable_eager_execution()
     args = parse_args()
     setup_logging(args.logfile)
 
