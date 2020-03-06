@@ -31,7 +31,7 @@ See `experiments/mc-benchmarks`.
 
 Hyperparameter searches for different MF models are implemented and can be run using `snakemake` in the following directories in `experiments/`:
 
-- `mc_hp_all_hfs_at_once` - MF, KPMF, MF with bias, KPMF with bias, NGMC models.
-- `xsmf2_all_hfs_at_once` - XSMF model
-- `kxsmf2` - Kernelized XSMF model
-- `kxsmf2_b` - Kernelized XSMF with bias model
+- `single-species-mf-hp-search` - MF, KPMF, MF with bias, KPMF with bias, NGMC models.
+- `xsmf-hp-search` - XSMF model
+- `k-xsmf-hp-search` - Kernelized XSMF model
+- `k-xsmf-b-hp-search` - Kernelized XSMF with bias model

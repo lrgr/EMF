@@ -5,7 +5,7 @@ import networkx as nx
 
 import tensorflow as tf
 
-from sklearn.externals import joblib
+import cloudpickle as cpkl
 
 import hyperopt
 from i_o import get_logger, log_dict, setup_logging
@@ -87,7 +87,7 @@ def add_ngmc_arguments(parser):
     add_mf_arguments(parser)
     parser.add_argument('--lambda_f_range', type=float, nargs=2, default=[0.005, 0.015])
     parser.add_argument('--lambda_h_range', type=float, nargs=2, default=[0.005, 0.015])
-    parser.add_argument('--ppi', type=str, required=False)
+    parser.add_argument('--ppi', type=str, required=True)
     parser.add_argument('--lambda_p_range', type=float, nargs=2, default=[0.005, 0.015])
     parser.add_argument('--alpha_p_range', type=float, nargs=2, default=[0.001, 0.002])
 
@@ -684,9 +684,9 @@ def main():
     log.info('[Starting MC experiment]')
     log_dict(log.info, vars(args))
     log.info('[Loading input data]')
-    obj = np.load(args.input_file)
-    #check_gi_obj(obj)
-    #mat = obj['values']
+
+    with open(args.input_file, 'rb') as f:
+        obj = cpkl.load(f)
 
     # Set up experiments
     fit_params = None
@@ -713,13 +713,11 @@ def main():
             fit_params = dict(L=L)
         elif args.mc_alg == 'NGMC':
             fit_params = dict(P=None)
-            if args.ppi is not None:
-                P = get_ppi_data(obj['rows'], ppi, mode='normalized_adjacency')
-                fit_params['P'] = P
+            P = get_ppi_data(obj['rows'], ppi, mode='normalized_adjacency')
+            fit_params['P'] = P
             param_space = ngmc_param_space(args)
             run_experiment = run_ngmc
         else:
-            #TODO: implement experimental protocol for ngmc
             raise(NotImplementedError('{} option is invalid or not implemented'.format(args.mc_alg)))
                                     
     else:
@@ -741,13 +739,17 @@ def main():
     log_results(results['summary'])
     with open(args.results_output, 'w') as f:
         json.dump(results, f, indent=2)
-    joblib.dump(training_curves, args.training_curve_output)
+
+    with open(args.training_curve_output, 'wb') as f:
+        cpkl.dump(training_curves, f)
 
     # TODO: save models the models cannot be pickled at the moment
     # We will need to implement a from dict and a to dict method
-    joblib.dump(trials, args.models_output)
+    with open(args.models_output, 'wb') as f:
+        cpkl.dump(trials, f)
 
-    joblib.dump(trials, args.trials_output)
+    with open(args.trials_output, 'wb') as f:
+        cpkl.dump(trials, f)
 
 # Run main and log and raise exceptions too
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
 from os.path import join
+
 # Function for generating arguments to subparser
 import yaml
 def gen_params(param_dict):
@@ -18,19 +19,18 @@ with open('data.yml') as IN:
 if config['algorithm'] == 'NGMC':
     config['logistic'] = True
 
+# Fornat for experiment names and output directories
 exp_name = 'gi={gi}_ppi={ppi}_hf{{hf}}_{{alg}}_lg={lg}_vf{vf}_cv{cv}_hp{hp}'
 exp_name = exp_name.format(gi=config['gis'],
                             ppi=config['ppi'] if config.get('ppi', None) else 'X',
-                            # hf=config['hidden_fraction'],
                             lg='T' if config['logistic'] else 'F',
                             vf=config['val_hidden_fraction'],
                             cv=config['n_repeats'],
                             hp=config['n_hyperopt_iters'])
 
-# output_dir = join('output', exp_name)
-output_dir = join('output_tmp', exp_name)
+output_dir = join('output', exp_name)
 
-run_mc = '../../src/run_mf_hp.py'
+run_hp_search = '../../src/single_species_mf_hp_search.py'
 results = join(output_dir, '{}-results.json'.format(exp_name))
 training_curve_pkl = join(output_dir, '{}_training_curves.pkl'.format(exp_name))
 models_pkl = join(output_dir, '{}_models.pkl'.format(exp_name))
@@ -40,8 +40,8 @@ log = join(output_dir, '{}-log.txt'.format(exp_name))
 plot_tr_curves = '../../src/plot_tr_curve.py'
 training_curve_plot = join(output_dir, '{}_training_curves_plot.pdf'.format(exp_name))
 
-# hidden_fracs = [0.90, 0.75, 0.50, 0.25]
-hidden_fracs = [0.90]
+# Vary % data held out for test time
+hidden_fracs = [0.90, 0.75, 0.50, 0.25]
 
 rule all:
     input:
@@ -50,14 +50,11 @@ rule all:
         expand(log, alg=config['algorithm'], hf=hidden_fracs),
         expand(training_curve_plot, alg=config['algorithm'], hf=hidden_fracs)
 
-# rule tr_curve:
-#     input:
-#         training_curve_plot.format(alg=config['algorithm'])
-
+# Kernelized probabilistic matrix factorization with bias
 _KPMF_b = 'KPMF_b'
 rule kpmf_b:
     input:
-        script=run_mc,
+        script=run_hp_search,
         gis=data_paths['gis'][config['gis']],
         ppi=lambda w: data_paths['ppi'][config['ppi']],
     output:
@@ -94,10 +91,11 @@ rule kpmf_b:
             --ppi {input.ppi}
         '''
 
+# Kernelized probabilistic matrix factorization
 _KPMF = 'KPMF'
 rule kpmf:
     input:
-        script=run_mc,
+        script=run_hp_search,
         gis=data_paths['gis'][config['gis']],
         ppi=lambda w: data_paths['ppi'][config['ppi']],
     output:
@@ -134,10 +132,11 @@ rule kpmf:
             --ppi {input.ppi}
         '''
 
+# Probabilistic matrix factorization
 _PMF = 'PMF'
 rule pmf:
     input:
-        script=run_mc,
+        script=run_hp_search,
         gis=data_paths['gis'][config['gis']],
     output:
         results=results.format(alg=_PMF, hf='{hf}'),
@@ -172,10 +171,11 @@ rule pmf:
             {params.param_space} \
         '''
 
+# Probabilistic matrix factorization with bias
 _PMF_b = 'PMF_b'
 rule pmfb:
     input:
-        script=run_mc,
+        script=run_hp_search,
         gis=data_paths['gis'][config['gis']],
     output:
         results=results.format(alg=_PMF_b, hf='{hf}'),
@@ -209,11 +209,12 @@ rule pmfb:
             {params.subparser} \
             {params.param_space} \
         '''
-
+# Network guided matrix factorization
+# Zitnik & Zuppan, Journal of Comp. Bio. 2015
 _NGMC = 'NGMC'
 rule ngmc:
     input:
-        script=run_mc,
+        script=run_hp_search,
         gis=data_paths['gis'][config['gis']],
     output:
         results=results.format(alg=_NGMC, hf='{hf}'),
@@ -249,6 +250,7 @@ rule ngmc:
             {params.ppi_params}
         '''
 
+# Monitor training with training curves
 rule plot_tr_curves:
     input:
         script=plot_tr_curves,

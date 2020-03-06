@@ -18,8 +18,6 @@ from xsmf2 import (KXSMF2_b, KXSMF2, XSMF2, index_sim_scores_by_ints, normalize_
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    
-    # Main parser (currently assuming we only do gradient descent)
     parser.add_argument('--hidden_fraction', type=float, required=True,
                         default=0.01)
     parser.add_argument('--random_seed', type=int, required=False,
@@ -46,7 +44,6 @@ def parse_args():
     add_ksxmf_arguments(subparsers.add_parser('KXSMF'))
     add_kxsmf2_arguments(subparsers.add_parser('KXSMF2'))
     add_kxsmf2_b_arguments(subparsers.add_parser('KXSMF2_b'))
-
 
     return parser.parse_args()
 
