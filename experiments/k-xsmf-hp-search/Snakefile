@@ -4,7 +4,7 @@ with open('data.yml') as IN:
     data_paths = yaml.safe_load(IN)
 
 SRC_DIR = '../../src'
-run_kxsmf = join(SRC_DIR, 'run_kxsmf2_hp.py')
+run_kxsmf = join(SRC_DIR, 'kxsmf_hp_search.py')
 
 exp_name = 'tgt={tgt}_src={src}_sims={sims}_tgt-ppi={tgt_ppi}_src-ppi={src_ppi}_hf{{hf}}_vf{vf}_cv{cv}_hp{hp}'
 exp_name = exp_name.format(tgt=config['tgt'],
@@ -12,7 +12,6 @@ exp_name = exp_name.format(tgt=config['tgt'],
                            sims=config['sim_scores'],
                            tgt_ppi=config['tgt-ppi'],
                            src_ppi=config['src-ppi'],
-                           #hf=config['hidden-fraction'],
                            vf=config['validation-fraction'],
                            cv=config['n-repeats'],
                            hp=config['n-hyperopt-iters'])

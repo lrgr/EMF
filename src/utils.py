@@ -5,8 +5,8 @@ import pandas as pd
 from scipy.stats import pearsonr
 from sklearn.metrics import mean_squared_error, r2_score
 
-from cross_species_mf import (gene2index, read_homolog_list,
-                              restrict_homs_to_gis)
+# from cross_species_mf import (gene2index, read_homolog_list,
+#                               restrict_homs_to_gis)
 from i_o import get_logger
 
 ###############################################################################
@@ -158,39 +158,38 @@ def add_hyperopt_quniform(space, name, minmax, step):
     space[name] = hyperopt.hp.quniform(name, minmax[0], minmax[1], step)
     return space
 
+# ###############################################################################
+# #                           Loading things verbosely...
+# ###############################################################################
 
-###############################################################################
-#                           Loading things verbosely...
-###############################################################################
+# def safe_verbose_load_gis(fp, to_upper=True):
+#     log = get_logger()
+#     log.info('* loading GIs from {}'.format(fp))
+#     obj = np.load(fp)
+#     check_gi_obj(obj) # TODO: move this to a utils file
+#     X = obj['values']
+#     log.info('* GIs have shape {}'.format(X.shape))
+#     log.info('* GIs are {:.3f}% sparse'.format(sparsity(X)))
+#     if to_upper:
+#         log.info('Converting genes names in GIs to use uppercase')
+#         genes = obj['rows']
+#         genes = np.asarray([g.upper() for g in genes])
+#     return genes, X
 
-def safe_verbose_load_gis(fp, to_upper=True):
-    log = get_logger()
-    log.info('* loading GIs from {}'.format(fp))
-    obj = np.load(fp)
-    check_gi_obj(obj) # TODO: move this to a utils file
-    X = obj['values']
-    log.info('* GIs have shape {}'.format(X.shape))
-    log.info('* GIs are {:.3f}% sparse'.format(sparsity(X)))
-    if to_upper:
-        log.info('Converting genes names in GIs to use uppercase')
-        genes = obj['rows']
-        genes = np.asarray([g.upper() for g in genes])
-    return genes, X
+# # def safe_verbose_load_homologs(fp, tgt_genes, src_genes, to_upper=True):
+# #     log = get_logger()
+# #     log.info('* loading homologs from {}'.format(fp))
 
-def safe_verbose_load_homologs(fp, tgt_genes, src_genes, to_upper=True):
-    log = get_logger()
-    log.info('* loading homologs from {}'.format(fp))
+# #     if to_upper:
+# #         log.info('* Converting genes in homologs to use uppercase')
+# #     homologs = read_homolog_list(fp, to_upper=to_upper)
+# #     homologs = restrict_homs_to_gis(homologs, tgt_genes, src_genes)
 
-    if to_upper:
-        log.info('* Converting genes in homologs to use uppercase')
-    homologs = read_homolog_list(fp, to_upper=to_upper)
-    homologs = restrict_homs_to_gis(homologs, tgt_genes, src_genes)
-
-    tgt_g2i = gene2index(tgt_genes)
-    src_g2i = gene2index(src_genes)
-    hom_idxs = np.asarray([(tgt_g2i[t], src_g2i[s]) for t, s in homologs])
+# #     tgt_g2i = gene2index(tgt_genes)
+# #     src_g2i = gene2index(src_genes)
+# #     hom_idxs = np.asarray([(tgt_g2i[t], src_g2i[s]) for t, s in homologs])
     
-    log.info('* found {} homolog pairs w.r.t {} target and {} source genes'.format(
-             len(hom_idxs), len(tgt_genes), len(src_genes)))
+# #     log.info('* found {} homolog pairs w.r.t {} target and {} source genes'.format(
+# #              len(hom_idxs), len(tgt_genes), len(src_genes)))
 
-    return hom_idxs
+# #     return hom_idxs

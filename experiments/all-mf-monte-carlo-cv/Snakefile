@@ -32,13 +32,13 @@ elif config['algorithm'] == 'NGMC':
                                tppi=config['tgt_ppi'],
                                cv=config['n_repeats'])
 
-elif config['algorithm'] == 'XSMF2':
+elif config['algorithm'] == 'XSMF':
     exp_name = 'tgt-gi={tgi}_src-gi={sgi}_alg={{alg}}_hf{{hf}}_cv{cv}'
 
     exp_name = exp_name.format(tgi=config['tgt_gis'],
                                sgi=config['src_gis'],
                                cv=config['n_repeats'])
-elif config['algorithm'] == 'KXSMF2':
+elif config['algorithm'] == 'KXSMF':
     exp_name = 'tgt-gi={tgi}_tgt_ppi={tppi}_src-gi={sgi}_src-ppi={sppi}_alg={{alg}}_hf{{hf}}_cv{cv}'
 
     exp_name = exp_name.format(tgi=config['tgt_gis'],
@@ -46,7 +46,7 @@ elif config['algorithm'] == 'KXSMF2':
                                sgi=config['src_gis'],
                                sppi=config['tgt_ppi'],
                                cv=config['n_repeats'])
-elif config['algorithm'] == 'KXSMF2-b':
+elif config['algorithm'] == 'KXSMF-b':
     exp_name = 'tgt-gi={tgi}_tgt_ppi={tppi}_src-gi={sgi}_src-ppi={sppi}_alg={{alg}}_hf{{hf}}_cv{cv}'
 
     exp_name = exp_name.format(tgi=config['tgt_gis'],
@@ -67,7 +67,8 @@ run_benchmark = '../../src/benchmark_mf.py'
 params = config['params']
 rule all:
     input:
-        expand(results, alg=config['algorithm'], hf=[0.25, 0.5, 0.75, 0.9])
+        #expand(results, alg=config['algorithm'], hf=[0.25, 0.5, 0.75, 0.9])
+        expand(results, alg=config['algorithm'], hf=[0.25])
 
 rule pmf:
     input:
@@ -260,16 +261,16 @@ rule ngmc:
             --lambda_p {params.lambda_p}\
         '''
 
-rule xsmf2:
+rule xsmf:
     input:
         tgt_gis=data_paths['gis'][config['tgt_gis']],
         src_gis=lambda _ : data_paths['gis'][config['src_gis']],
         sim_scores=lambda _ : data_paths['sim_scores'][config['sim_scores']],
     output:
-        results=results.format(alg='XSMF2', hf='{hf}'),
-        models=models_pkl.format(alg='XSMF2', hf='{hf}'),
+        results=results.format(alg='XSMF', hf='{hf}'),
+        models=models_pkl.format(alg='XSMF', hf='{hf}'),
     log:
-        log.format(alg='XSMF2', hf='{hf}')
+        log.format(alg='XSMF', hf='{hf}')
     params:
         n_repeats = config['n_repeats'],
         hidden_fraction=lambda w: w['hf'],
@@ -292,7 +293,7 @@ rule xsmf2:
             --results_output {output.results} \
             --models_output {output.models} \
             --logfile {log} \
-            XSMF2 \
+            XSMF \
             --target_gis {input.tgt_gis}\
             --source_gis {input.src_gis}\
             --sim_scores {input.sim_scores}\
@@ -309,7 +310,7 @@ rule xsmf2:
         '''
 
 
-rule kxsmf2:
+rule kxsmf:
     input:
         tgt_gis=data_paths['gis'][config['tgt_gis']],
         src_gis=lambda _ : data_paths['gis'][config['src_gis']],
@@ -317,10 +318,10 @@ rule kxsmf2:
         tgt_ppi=lambda _ : data_paths['ppi'][config['tgt_ppi']],
         src_ppi=lambda _ : data_paths['ppi'][config['src_ppi']],
     output:
-        results=results.format(alg='KXSMF2', hf='{hf}'),
-        models=models_pkl.format(alg='KXSMF2', hf='{hf}'),
+        results=results.format(alg='KXSMF', hf='{hf}'),
+        models=models_pkl.format(alg='KXSMF', hf='{hf}'),
     log:
-        log.format(alg='KXSMF2', hf='{hf}')
+        log.format(alg='KXSMF', hf='{hf}')
     params:
         n_repeats = config['n_repeats'],
         hidden_fraction=lambda w: w['hf'],
@@ -345,7 +346,7 @@ rule kxsmf2:
             --results_output {output.results} \
             --models_output {output.models} \
             --logfile {log} \
-            KXSMF2 \
+            KXSMF \
             --target_gis {input.tgt_gis}\
             --source_gis {input.src_gis}\
             --target_ppi {input.tgt_ppi}\
@@ -366,7 +367,7 @@ rule kxsmf2:
         '''
 
 
-rule kxsmf2_b:
+rule kxsmf_b:
     input:
         tgt_gis=data_paths['gis'][config['tgt_gis']],
         src_gis=lambda _ : data_paths['gis'][config['src_gis']],
@@ -374,10 +375,10 @@ rule kxsmf2_b:
         tgt_ppi=lambda _ : data_paths['ppi'][config['tgt_ppi']],
         src_ppi=lambda _ : data_paths['ppi'][config['src_ppi']],
     output:
-        results=results.format(alg='KXSMF2-b', hf='{hf}'),
-        models=models_pkl.format(alg='KXSMF2-b', hf='{hf}'),
+        results=results.format(alg='KXSMF-b', hf='{hf}'),
+        models=models_pkl.format(alg='KXSMF-b', hf='{hf}'),
     log:
-        log.format(alg='KXSMF2-b', hf='{hf}')
+        log.format(alg='KXSMF-b', hf='{hf}')
     params:
         n_repeats = config['n_repeats'],
         hidden_fraction=lambda w: w['hf'],
@@ -403,7 +404,7 @@ rule kxsmf2_b:
             --results_output {output.results} \
             --models_output {output.models} \
             --logfile {log} \
-            KXSMF2_b \
+            KXSMF_b \
             --target_gis {input.tgt_gis}\
             --source_gis {input.src_gis}\
             --target_ppi {input.tgt_ppi}\

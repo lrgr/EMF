@@ -1,4 +1,4 @@
-algorithm: XSMF2
+algorithm: XSMF
 tgt_gis: costanzo10
 src_gis: ryan
 sim_scores: costanzo-ryan

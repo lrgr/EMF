@@ -4,7 +4,7 @@ with open('data.yml') as IN:
     data_paths = yaml.safe_load(IN)
 
 SRC_DIR = '../../src'
-run_kxsmf = join(SRC_DIR, 'run_kxsmf2b_hp.py')
+run_kxsmf = join(SRC_DIR, 'kxsmfb_hp_search.py')
 
 exp_name = 'tgt={tgt}_src={src}_sims={sims}_tgt-ppi={tgt_ppi}_src-ppi={src_ppi}_hf{{hf}}_vf{vf}_cv{cv}_hp{hp}'
 exp_name = exp_name.format(tgt=config['tgt'],
@@ -26,7 +26,7 @@ log = join(output_dir, '{}-log.txt'.format(exp_name))
 rule all:
     input:
         expand(results, hf=[0.25, 0.5, 0.75, 0.9])
-        # expand(results, hf=[0.25])
+        #expand(results, hf=[0.25])
 
 
 rule once:

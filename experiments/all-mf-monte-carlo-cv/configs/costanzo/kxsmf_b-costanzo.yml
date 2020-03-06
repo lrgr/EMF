@@ -1,4 +1,4 @@
-algorithm: KXSMF2-b
+algorithm: KXSMF-b
 tgt_gis: costanzo10
 src_gis: ryan
 sim_scores: costanzo-ryan

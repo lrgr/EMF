@@ -1,20 +1,19 @@
 import argparse
 import json
 
-import numpy as np
+import cloudpickle as cpkl
 import networkx as nx
+import numpy as np
 import tensorflow as tf
-from cross_species_mf import (KXSMF, XSMF, gene2index, read_homolog_list,
-                              restrict_homs_to_gis)
-from ngmc import NGMC
-from i_o import get_logger, log_dict, setup_logging
-from matrix_completion import KPMF, PMF, MCScaler, PMF_b, KPMF_b
+
 from cv import gi_train_test_split
-from utils import (check_gi_obj, evaluate_model, get_ppi_data, log_results,
-                       sparsity, summarize_results, get_laplacian, safe_verbose_load_gis, safe_verbose_load_homologs)
-from sklearn.externals import joblib
-from xsmf2 import (KXSMF2_b, KXSMF2, XSMF2, index_sim_scores_by_ints, normalize_sim_scores,
-                   restrict_sim_scores)
+from i_o import get_logger, log_dict, setup_logging
+from matrix_completion import KPMF, PMF, KPMF_b, MCScaler, PMF_b
+
+from ngmc import NGMC
+from utils import (check_gi_obj, evaluate_model, get_laplacian, get_ppi_data,
+                   log_results, sparsity, summarize_results)
+from xsmf import (KXSMF, XSMF, KXSMF_b, normalize_sim_scores)
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -39,11 +38,9 @@ def parse_args():
     add_ngmc_arguments(subparsers.add_parser('NGMC'))
 
     add_xsmf_arguments(subparsers.add_parser('XSMF'))
-    add_xsmf2_arguments(subparsers.add_parser('XSMF2'))
 
-    add_ksxmf_arguments(subparsers.add_parser('KXSMF'))
-    add_kxsmf2_arguments(subparsers.add_parser('KXSMF2'))
-    add_kxsmf2_b_arguments(subparsers.add_parser('KXSMF2_b'))
+    add_kxsmf_arguments(subparsers.add_parser('KXSMF'))
+    add_kxsmf_b_arguments(subparsers.add_parser('KXSMF_b'))
 
     return parser.parse_args()
 
@@ -90,25 +87,6 @@ def add_ngmc_arguments(parser):
 def add_xsmf_arguments(parser):
     add_mf_arguments(parser)
     parser.add_argument('--source_gis', type=str, required=True)
-    parser.add_argument('--homologs', type=str, required=True)
-    
-    parser.add_argument('--lambda_hom', type=float, required=True)
-    parser.add_argument('--lambda_source', type=float, required=True)
-    parser.add_argument('--lambda_u', type=float, required=True)
-    parser.add_argument('--lambda_v', type=float, required=True)
-    parser.add_argument('--lambda_us', type=float, required=True)
-    parser.add_argument('--lambda_vs', type=float, required=True)
-
-def add_ksxmf_arguments(parser):
-    add_xsmf_arguments(parser)
-    parser.add_argument('--target_ppi', type=str, required=True)
-    parser.add_argument('--source_ppi', type=str, required=True)
-    parser.add_argument('--lambda_tgt_rl', type=float, required=True)
-    parser.add_argument('--lambda_src_rl', type=float, required=True)
-
-def add_xsmf2_arguments(parser):
-    add_mf_arguments(parser)
-    parser.add_argument('--source_gis', type=str, required=True)
     parser.add_argument('--sim_scores', type=str, required=True)
     
     parser.add_argument('--lambda_sim', type=float, required=True)
@@ -118,16 +96,16 @@ def add_xsmf2_arguments(parser):
     parser.add_argument('--lambda_us', type=float, required=True)
     parser.add_argument('--lambda_vs', type=float, required=True)
 
-def add_kxsmf2_arguments(parser):
-    add_xsmf2_arguments(parser)
+def add_kxsmf_arguments(parser):
+    add_xsmf_arguments(parser)
     parser.add_argument('--target_ppi', type=str, required=True)
     parser.add_argument('--source_ppi', type=str, required=True)
     parser.add_argument('--lambda_tgt_rl', type=float, required=True)
     parser.add_argument('--lambda_src_rl', type=float, required=True)
 
 
-def add_kxsmf2_b_arguments(parser):
-    add_kxsmf2_arguments(parser)
+def add_kxsmf_b_arguments(parser):
+    add_kxsmf_arguments(parser)
     parser.add_argument('--lambda_b', type=float, required=True)
 
 def train_pmf_model(X_train, rank, iters, lr, lam, report_every):
@@ -243,92 +221,7 @@ def train_ngmc_models(train_Xs, A,
     # factors = [(model.F, model.H) for model in models]
     return fitted_Xs, None
 
-
-
-def train_xsmf_model(X, X_src,hom_idxs, 
-                    rank, iters , lr, 
-                    lambda_hom, lambda_source,
-                    lambda_u, lambda_v,
-                    lambda_us, lambda_vs,
-                    report_every):
-    xsmf = XSMF(X=X, X_source=X_src, hom_idxs=hom_idxs,
-                rank=rank, max_iter=iters, lr=lr, 
-                lambda_hom=lambda_hom, lambda_source=lambda_source,
-                lambda_u=lambda_u, lambda_v=lambda_v,
-                lambda_us=lambda_us, lambda_vs=lambda_vs,
-                report_every=report_every,
-                logistic=False)
-    xsmf = xsmf.fit()
-    tf.reset_default_graph()
-    return xsmf
-
-def train_xsmf_models(train_Xs, X_src, hom_idxs,
-                     rank, iters, lr,
-                     lambda_hom,
-                     lambda_source,
-                     lambda_u,
-                     lambda_v,
-                     lambda_us,
-                     lambda_vs,
-                     report_every):
-    models = [train_xsmf_model(X, X_src, hom_idxs,
-                                rank, iters , lr, 
-                                lambda_hom, lambda_source,
-                                lambda_u, lambda_v,
-                                lambda_us, lambda_vs,
-                                report_every) for X in train_Xs]
-    fitted_Xs = [model.X_fitted for model in models]
-    factors = [(model.U, model.V, model.US, model.VS) for model in models]
-    return fitted_Xs, factors
-
-def train_kxsmf_model(X, X_src,
-                    L_tgt, L_src,
-                    hom_idxs, 
-                    rank, iters , lr, 
-                    lambda_hom, lambda_source,
-                    lambda_u, lambda_v,
-                    lambda_us, lambda_vs,
-                    lambda_tgt_rl, lambda_src_rl,
-                    report_every):
-    kxsmf = KXSMF(X=X, X_source=X_src, 
-                L_tgt=L_tgt, L_src=L_src,
-                hom_idxs=hom_idxs,
-                rank=rank, max_iter=iters, lr=lr, 
-                lambda_hom=lambda_hom, lambda_source=lambda_source,
-                lambda_u=lambda_u, lambda_v=lambda_v,
-                lambda_us=lambda_us, lambda_vs=lambda_vs,
-                lambda_tgt_rl=lambda_tgt_rl, lambda_src_rl=lambda_src_rl,
-                report_every=report_every,
-                logistic=False)
-    kxsmf = kxsmf.fit()
-    tf.reset_default_graph()
-    return kxsmf
-
-def train_kxsmf_models(train_Xs, X_src, 
-                     L_tgt, L_src,
-                     hom_idxs,
-                     rank, iters, lr,
-                     lambda_hom,
-                     lambda_source,
-                     lambda_u,
-                     lambda_v,
-                     lambda_us,
-                     lambda_vs,
-                     lambda_tgt_rl,
-                     lambda_src_rl,
-                     report_every):
-    models = [train_kxsmf_model(X, X_src, L_tgt, L_src, hom_idxs,
-                                rank, iters , lr, 
-                                lambda_hom, lambda_source,
-                                lambda_u, lambda_v,
-                                lambda_us, lambda_vs,
-                                lambda_tgt_rl, lambda_src_rl,
-                                report_every) for X in train_Xs]
-    fitted_Xs = [model.X_fitted for model in models]
-    factors = [(model.U, model.V, model.US, model.VS) for model in models]
-    return fitted_Xs, factors
-
-def train_xsmf2_model(X, X_src, sim_scores,
+def train_xsmf_model(X, X_src, sim_scores,
                      rank, iters, lr,
                      lambda_sim,
                      lambda_src,
@@ -337,17 +230,17 @@ def train_xsmf2_model(X, X_src, sim_scores,
                      lambda_us,
                      lambda_vs,
                      report_every):
-    xsmf2 = XSMF2(X_tgt=X, X_src=X_src, sim_scores=sim_scores,
+    xsmf = XSMF(X_tgt=X, X_src=X_src, sim_scores=sim_scores,
                 rank=rank, max_iter=iters, lr=lr, 
                 lambda_sim=lambda_sim, lambda_src=lambda_src,
                 lambda_u=lambda_u, lambda_v=lambda_v,
                 lambda_us=lambda_us, lambda_vs=lambda_vs,
                 report_every=report_every)
-    xsmf2 = xsmf2.fit()
+    xsmf = xsmf.fit()
     tf.reset_default_graph()
-    return xsmf2
+    return xsmf
 
-def train_xsmf2_models(train_Xs, X_src,
+def train_xsmf_models(train_Xs, X_src,
                      sim_scores,
                      rank, iters, lr,
                      lambda_sim,
@@ -357,7 +250,7 @@ def train_xsmf2_models(train_Xs, X_src,
                      lambda_us,
                      lambda_vs,
                      report_every):
-    models = [train_xsmf2_model(X, X_src, sim_scores,
+    models = [train_xsmf_model(X, X_src, sim_scores,
                                 rank, iters , lr, 
                                 lambda_sim, lambda_src,
                                 lambda_u, lambda_v,
@@ -367,7 +260,7 @@ def train_xsmf2_models(train_Xs, X_src,
     factors = [(model.U, model.V, model.US, model.VS) for model in models]
     return fitted_Xs, factors
 
-def train_kxsmf2_model(X, X_src, 
+def train_kxsmf_model(X, X_src, 
                      L_tgt, L_src,
                      sim_scores,
                      rank, iters, lr,
@@ -380,7 +273,7 @@ def train_kxsmf2_model(X, X_src,
                      lambda_tgt_rl,
                      lambda_src_rl,
                      report_every):
-    kxsmf2 = KXSMF2(X_tgt=X, X_src=X_src,
+    kxsmf = KXSMF(X_tgt=X, X_src=X_src,
                     L_tgt=L_tgt, L_src=L_src,
                     sim_scores=sim_scores,
                     rank=rank, max_iter=iters, lr=lr, 
@@ -390,11 +283,11 @@ def train_kxsmf2_model(X, X_src,
                     lambda_tgt_rl=lambda_tgt_rl,
                     lambda_src_rl=lambda_src_rl,
                     report_every=report_every)
-    kxsmf2 = kxsmf2.fit()
+    kxsmf = kxsmf.fit()
     tf.reset_default_graph()
-    return kxsmf2
+    return kxsmf
 
-def train_kxsmf2_models(train_Xs, X_src, 
+def train_kxsmf_models(train_Xs, X_src, 
                      L_tgt, L_src,
                      sim_scores,
                      rank, iters, lr,
@@ -407,7 +300,7 @@ def train_kxsmf2_models(train_Xs, X_src,
                      lambda_tgt_rl,
                      lambda_src_rl,
                      report_every):
-    models = [train_kxsmf2_model(X, X_src,L_tgt, L_src,
+    models = [train_kxsmf_model(X, X_src,L_tgt, L_src,
                                 sim_scores,
                                 rank, iters, lr,
                                 lambda_sim,
@@ -424,7 +317,7 @@ def train_kxsmf2_models(train_Xs, X_src,
     return fitted_Xs, factors
 
 
-def train_kxsmf2b_model(X, X_src, 
+def train_kxsmfb_model(X, X_src, 
                      L_tgt, L_src,
                      sim_scores,
                      rank, iters, lr,
@@ -438,7 +331,7 @@ def train_kxsmf2b_model(X, X_src,
                      lambda_tgt_rl,
                      lambda_src_rl,
                      report_every):
-    kxsmf2b = KXSMF2_b(X_tgt=X, X_src=X_src,
+    kxsmfb = KXSMF_b(X_tgt=X, X_src=X_src,
                     L_tgt=L_tgt, L_src=L_src,
                     sim_scores=sim_scores,
                     rank=rank, max_iter=iters, lr=lr, 
@@ -449,11 +342,11 @@ def train_kxsmf2b_model(X, X_src,
                     lambda_tgt_rl=lambda_tgt_rl,
                     lambda_src_rl=lambda_src_rl,
                     report_every=report_every)
-    kxsmf2b = kxsmf2b.fit()
+    kxsmfb = kxsmfb.fit()
     tf.reset_default_graph()
-    return kxsmf2b
+    return kxsmfb
 
-def train_kxsmf2b_models(train_Xs, X_src, 
+def train_kxsmfb_models(train_Xs, X_src, 
                      L_tgt, L_src,
                      sim_scores,
                      rank, iters, lr,
@@ -467,7 +360,7 @@ def train_kxsmf2b_models(train_Xs, X_src,
                      lambda_tgt_rl,
                      lambda_src_rl,
                      report_every):
-    models = [train_kxsmf2b_model(X, X_src,L_tgt, L_src,
+    models = [train_kxsmfb_model(X, X_src,L_tgt, L_src,
                                 sim_scores,
                                 rank, iters, lr,
                                 lambda_b,
@@ -507,7 +400,9 @@ def main():
 
     log.info('[Loading input data]')
 
-    gi_data = np.load(args.target_gis)
+    with open(args.target_gis, 'rb') as f:
+        gi_data = cpkl.load(f)
+
     row_genes = gi_data['rows']
 
     log.info('\t- setting up training and test sets')
@@ -519,10 +414,12 @@ def main():
     else:
         scalers = [MCScaler('std') for _ in range(args.n_repeats)]
 
-    if args.mc_alg in ['XSMF, KXSMF']:
-        train_Xs = [scaler.fit_transform(X).T for scaler, X in zip(scalers, train_Xs)] # Take transposes here for XSMF, KXSMF
-    else:
-        train_Xs = [scaler.fit_transform(X) for scaler, X in zip(scalers, train_Xs)] # Take transposes here for XSMF, KXSMF
+    # if args.mc_alg in ['XSMF, KXSMF']:
+    #     train_Xs = [scaler.fit_transform(X).T for scaler, X in zip(scalers, train_Xs)] # Take transposes here for XSMF, KXSMF
+    # else:
+    #     train_Xs = [scaler.fit_transform(X) for scaler, X in zip(scalers, train_Xs)] # Take transposes here for XSMF, KXSMF
+
+    train_Xs = [scaler.fit_transform(X) for scaler, X in zip(scalers, train_Xs)]
 
     if args.mc_alg == 'PMF':
         imputed_Xs, models_info = train_pmf_models(train_Xs = train_Xs,
@@ -575,65 +472,18 @@ def main():
                                                     lambda_h = args.lambda_h,
                                                     lambda_p = args.lambda_p)
     elif args.mc_alg == 'XSMF':
-        src_gi_data = np.load(args.source_gis)
-        X_src = src_gi_data['values']
-        X_src = MCScaler(mode='std').fit_transform(X_src).T # Take transposes here for XSMF, KXSMF
-        log.info('[Loading homologs]')
-        hom_idxs = safe_verbose_load_homologs(args.homologs, gi_data['cols'], src_gi_data['cols'])
-
-        imputed_Xs, models_info = train_xsmf_models(train_Xs = train_Xs,
-                                                    X_src = X_src,
-                                                    hom_idxs=hom_idxs,
-                                                    rank = args.rank,
-                                                    iters = args.iters,
-                                                    lr = args.lr,
-                                                    lambda_hom = args.lambda_hom,
-                                                    lambda_source = args.lambda_source,
-                                                    lambda_u = args.lambda_u,
-                                                    lambda_v = args.lambda_v,
-                                                    lambda_us = args.lambda_us,
-                                                    lambda_vs = args.lambda_vs,
-                                                    report_every = args.report_every)
-    elif args.mc_alg == 'KXSMF':
-        src_gi_data = np.load(args.source_gis)
-        X_src = src_gi_data['values']
-        X_src = MCScaler(mode='std').fit_transform(X_src).T # Take transposes here for XSMF, KXSMF
-        L_tgt = get_laplacian(list(gi_data['rows']), args.target_ppi)
-        L_src = get_laplacian(list(src_gi_data['rows']), args.source_ppi)
-        log.warn('%s, %s' % L_src.shape)
-        log.warn('%s, %s' % X_src.shape)
-
-
-        log.info('[Loading homologs]')
-        hom_idxs = safe_verbose_load_homologs(args.homologs, gi_data['cols'], src_gi_data['cols'])
-        imputed_Xs, models_info = train_kxsmf_models(train_Xs = train_Xs,
-                                                    X_src = X_src,
-                                                    L_tgt = L_tgt,
-                                                    L_src = L_src,
-                                                    hom_idxs=hom_idxs,
-                                                    rank = args.rank,
-                                                    iters = args.iters,
-                                                    lr = args.lr,
-                                                    lambda_hom = args.lambda_hom,
-                                                    lambda_source = args.lambda_source,
-                                                    lambda_u = args.lambda_u,
-                                                    lambda_v = args.lambda_v,
-                                                    lambda_us = args.lambda_us,
-                                                    lambda_vs = args.lambda_vs,
-                                                    lambda_tgt_rl = args.lambda_tgt_rl,
-                                                    lambda_src_rl = args.lambda_src_rl,
-                                                    report_every = args.report_every)
-    elif args.mc_alg == 'XSMF2':
-        src_gi_data = np.load(args.source_gis)
+        with open(args.source_gis, 'rb') as f:
+            src_gi_data = cpkl.load(f)
         X_src = src_gi_data['values']
         X_src = MCScaler(mode='std').fit_transform(X_src)
 
         log.info('[Loading sim scores]')
-        sim_scores_data = np.load(args.sim_scores)
+        with open(args.sim_scores, 'rb') as f:
+            sim_scores_data = cpkl.load(f)
         sim_scores = sim_scores_data['values']
         sim_scores = sim_scores / np.max(sim_scores) # Normalize
 
-        imputed_Xs, models_info = train_xsmf2_models(train_Xs = train_Xs,
+        imputed_Xs, models_info = train_xsmf_models(train_Xs = train_Xs,
                                                     X_src = X_src,
                                                     sim_scores=sim_scores,
                                                     rank = args.rank,
@@ -646,13 +496,15 @@ def main():
                                                     lambda_us = args.lambda_us,
                                                     lambda_vs = args.lambda_vs,
                                                     report_every = args.report_every)
-    elif args.mc_alg == 'KXSMF2':
-        src_gi_data = np.load(args.source_gis)
+    elif args.mc_alg == 'KXSMF':
+        with open(args.source_gis, 'rb') as f:
+            src_gi_data = cpkl.load(f)
         X_src = src_gi_data['values']
         X_src = MCScaler(mode='std').fit_transform(X_src)
 
         log.info('[Loading sim scores]')
-        sim_scores_data = np.load(args.sim_scores)
+        with open(args.sim_scores, 'rb') as f:
+            sim_scores_data = cpkl.load(f)
         sim_scores = sim_scores_data['values']
         sim_scores = sim_scores / np.max(sim_scores) # Normalize
 
@@ -661,7 +513,7 @@ def main():
         log.warn('%s, %s' % L_src.shape)
         log.warn('%s, %s' % X_src.shape)
 
-        imputed_Xs, models_info = train_kxsmf2_models(train_Xs = train_Xs,
+        imputed_Xs, models_info = train_kxsmf_models(train_Xs = train_Xs,
                                                     X_src = X_src,
                                                     L_tgt=L_tgt,
                                                     L_src=L_src,
@@ -678,13 +530,15 @@ def main():
                                                     lambda_tgt_rl = args.lambda_tgt_rl,
                                                     lambda_src_rl = args.lambda_src_rl,
                                                     report_every = args.report_every)
-    elif args.mc_alg == 'KXSMF2_b':
-        src_gi_data = np.load(args.source_gis)
+    elif args.mc_alg == 'KXSMF_b':
+        with open(args.source_gis, 'rb') as f:
+            src_gi_data = cpkl.load(f)
         X_src = src_gi_data['values']
         X_src = MCScaler(mode='std').fit_transform(X_src)
 
         log.info('[Loading sim scores]')
-        sim_scores_data = np.load(args.sim_scores)
+        with open(args.sim_scores, 'rb') as f:
+            sim_scores_data = cpkl.load(f)
         sim_scores = sim_scores_data['values']
         sim_scores = sim_scores / np.max(sim_scores) # Normalize
 
@@ -693,7 +547,7 @@ def main():
         log.warn('%s, %s' % L_src.shape)
         log.warn('%s, %s' % X_src.shape)
 
-        imputed_Xs, models_info = train_kxsmf2b_models(train_Xs = train_Xs,
+        imputed_Xs, models_info = train_kxsmfb_models(train_Xs = train_Xs,
                                                     X_src = X_src,
                                                     L_tgt=L_tgt,
                                                     L_src=L_src,
@@ -717,10 +571,11 @@ def main():
     if len(gi_data['rows']) == len(gi_data['cols']) and np.all(gi_data['rows'] == gi_data['cols']):
         log.info('* Averaging over pairs because input is symmetric')
         imputed_Xs = [(X + X.T) / 2 for X in imputed_Xs]
-    if args.mc_alg in ['XSMF, KXSMF']:
-        imputed_Xs = [scaler.inverse_transform(X).T for scaler, X in zip(scalers, imputed_Xs)] # Take transposes here for XSMF, KXSMF
-    else:
-        imputed_Xs = [scaler.inverse_transform(X) for scaler, X in zip(scalers, imputed_Xs)] # Take transposes here for XSMF, KXSMF
+    # if args.mc_alg in ['XSMF, KXSMF']:
+    #     imputed_Xs = [scaler.inverse_transform(X).T for scaler, X in zip(scalers, imputed_Xs)] # Take transposes here for XSMF, KXSMF
+    # else:
+    
+    imputed_Xs = [scaler.inverse_transform(X) for scaler, X in zip(scalers, imputed_Xs)] # Take transposes here for XSMF, KXSMF
 
     results = evaluate_preds(test_Xs, imputed_Xs, test_masks)
     results, fold_results = summarize_results(results)
@@ -729,8 +584,8 @@ def main():
     with open(args.results_output, 'w') as f:
         json.dump(dict(summary=results, collected=fold_results, args=vars(args)), f, indent=2)
 
-    joblib.dump(models_info, args.models_output)
-
+    with open(args.models_output, 'wb') as f:
+        cpkl.dump(models_info, f)
 
 if __name__ == "__main__":
     main()

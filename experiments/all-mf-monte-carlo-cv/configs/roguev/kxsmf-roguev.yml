@@ -1,4 +1,4 @@
-algorithm: KXSMF2
+algorithm: KXSMF
 tgt_gis: roguev
 src_gis: collins
 sim_scores: roguev-collins

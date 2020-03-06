@@ -1,4 +1,4 @@
-algorithm: XSMF2
+algorithm: XSMF
 tgt_gis: roguev
 src_gis: collins
 sim_scores: roguev-collins

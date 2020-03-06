@@ -1,19 +1,19 @@
 import json
 
+import cloudpickle as cpkl
 import hyperopt
 import numpy as np
 import pandas as pd
 import tensorflow as tf
+from sklearn.metrics import r2_score
+
 from cv import gi_train_test_split
 from i_o import get_logger, log_dict, setup_logging
 from matrix_completion import MCScaler
-from sklearn.externals import joblib
-from sklearn.metrics import r2_score
-from utils import (add_hyperopt_loguniform, add_hyperopt_quniform, get_laplacian,
-                   evaluate_model, log_results, sparsity, summarize_results)
-from xsmf2 import (KXSMF2, index_sim_scores_by_ints, normalize_sim_scores,
-                   restrict_sim_scores)
-
+from utils import (add_hyperopt_loguniform, add_hyperopt_quniform,
+                   evaluate_model, log_results, sparsity, summarize_results,
+                   get_laplacian)
+from xsmf import KXSMF, normalize_sim_scores
 
 def parse_args():
     import argparse
@@ -67,7 +67,7 @@ def parse_args():
 #                           MAIN
 ###############################################################################
 
-def kxsmf2_param_space(args):
+def kxsmf_param_space(args):
     param_space = {}
     add_hyperopt_loguniform(param_space, 'lambda_sim', args.lambda_sim)
     add_hyperopt_loguniform(param_space, 'lambda_src', args.lambda_source)
@@ -85,12 +85,12 @@ def kxsmf2_param_space(args):
     param_space['report_every'] = args.report_every
     return param_space
 
-def get_kxsmf2_obj(X_train, X_val, src_X, sim_scores, L_tgt, L_src):
+def get_kxsmf_obj(X_train, X_val, src_X, sim_scores, L_tgt, L_src):
     def objective(params):
         # Note that the parameter dictionary returned is specified *explicitly* with no
         # optional arguments. This makes reporting and retraining easy and unambiguous
         print(params)
-        model = KXSMF2(X_tgt=X_train, X_val=X_val, X_src=src_X,
+        model = KXSMF(X_tgt=X_train, X_val=X_val, X_src=src_X,
                        L_tgt=L_tgt, L_src=L_src,
                       sim_scores=sim_scores,
                         **params)
@@ -109,7 +109,7 @@ def get_kxsmf2_obj(X_train, X_val, src_X, sim_scores, L_tgt, L_src):
         }
     return objective
 
-def run_kxsmf2_experiment(tgt_gis, src_gis, sim_scores, L_tgt, L_src,
+def run_kxsmf_experiment(tgt_gis, src_gis, sim_scores, L_tgt, L_src,
                         space, val_hf, test_hf,
                         n_repeats, hp_iters, hp_seed):
     all_results = []
@@ -135,7 +135,7 @@ def run_kxsmf2_experiment(tgt_gis, src_gis, sim_scores, L_tgt, L_src,
         trials = hyperopt.Trials()
         # NB: Ignore the returned hyperopt parameters, we want to know which parameters were
         # used even if they were default values for keyword arguments
-        _ = hyperopt.fmin(fn=get_kxsmf2_obj(X_train, X_val, src_X_scaled, sim_scores, L_tgt, L_src), 
+        _ = hyperopt.fmin(fn=get_kxsmf_obj(X_train, X_val, src_X_scaled, sim_scores, L_tgt, L_src), 
                         space=space, 
                         algo=hyperopt.tpe.suggest,
                         max_evals = hp_iters,
@@ -162,7 +162,7 @@ def run_kxsmf2_experiment(tgt_gis, src_gis, sim_scores, L_tgt, L_src,
 
         # Retrain model using the number of iterations and parameters found in hp search
         log.info('- Retraining model without validation to get best model')
-        best_model = KXSMF2(X_tgt=X_train_all, X_val=None, X_src=src_X_scaled,  
+        best_model = KXSMF(X_tgt=X_train_all, X_val=None, X_src=src_X_scaled,  
                             sim_scores=sim_scores, L_tgt=L_tgt, L_src=L_src,
                             **best_params)
        
@@ -211,14 +211,16 @@ def main():
     log.info('[Starting MC experiment]')
     log_dict(log.info, vars(args))
     log.info('[Loading target GIs]')
-    tgt_gis = np.load(args.target_gis)
+    with open(args.target_gis, 'rb') as f:
+        tgt_gis = cpkl.load(f)
     
     log.info('[Loading source GIs]')
-    src_gis = np.load(args.source_gis)
+    with open(args.source_gis, 'rb') as f:
+        src_gis = cpkl.load(f)
 
-    
     log.info('[Loading sim scores]')
-    sim_scores_data = np.load(args.sim_scores)
+    with open(args.sim_scores, 'rb') as f:
+        sim_scores_data = cpkl.load(f)
     sim_scores = sim_scores_data['values']
     sim_scores = sim_scores / np.max(sim_scores) # Normalize
 
@@ -227,10 +229,10 @@ def main():
     log.info('[Loading source PPI]')
     L_src = get_laplacian(src_gis['rows'], args.source_ppi)
 
-    hp_param_space = kxsmf2_param_space(args)
+    hp_param_space = kxsmf_param_space(args)
 
     results, models, training_curves, trials = \
-        run_kxsmf2_experiment(tgt_gis=tgt_gis,
+        run_kxsmf_experiment(tgt_gis=tgt_gis,
                             src_gis=src_gis,
                             L_tgt=L_tgt,
                             L_src=L_src,
@@ -245,13 +247,17 @@ def main():
     log_results(results['summary'])
     with open(args.results_output, 'w') as f:
         json.dump(results, f, indent=2)
-    joblib.dump(training_curves, args.training_curve_output)
+
+    with open(args.training_curve_output, 'wb') as f:
+        cpkl.dump(training_curves, f)
 
     # TODO: save models the models cannot be pickled at the moment
     # We will need to implement a from dict and a to dict method
-    joblib.dump(trials, args.models_output)
+    with open(args.models_output, 'wb') as f:
+        cpkl.dump(trials, f)
 
-    joblib.dump(trials, args.trials_output)
+    with open(args.trials_output, 'wb') as f:
+        cpkl.dump(trials, f)
 
 if __name__ == "__main__":
     main()

@@ -12,9 +12,7 @@ from i_o import get_logger, log_dict, setup_logging
 from matrix_completion import MCScaler
 from utils import (add_hyperopt_loguniform, add_hyperopt_quniform,
                    evaluate_model, log_results, sparsity, summarize_results)
-from xsmf2 import XSMF2 as XSMF
-from xsmf2 import (index_sim_scores_by_ints, normalize_sim_scores,
-                   restrict_sim_scores)
+from xsmf import XSMF, normalize_sim_scores
 
 
 def parse_args():
@@ -24,8 +22,6 @@ def parse_args():
     # Parser
     parser.add_argument('-tgt', '--target_gis', type=str, required=True)
     parser.add_argument('-src', '--source_gis', type=str, required=True)
-    parser.add_argument('--target_ppi', type=str, required=False) #optional argument that triggers kxsmf run
-    parser.add_argument('--source_ppi', type=str, required=False) #optional argument that triggers kxsmf run
     parser.add_argument('-sims', '--sim_scores', type=str, required=True)
     parser.add_argument('-of', '--results_output', type=str, required=True)
     parser.add_argument('-tc', '--training_curve_output', type=str, required=True)
