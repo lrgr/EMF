@@ -18,6 +18,7 @@ The `xsmf` Conda environment can be used to run any number of experiments and ex
 ### To run models using GPUs:
 
 To use GPUs, install the `xsmf-gpu` environment via:
+
     conda env create -f environment-gpu.yml
     source activate xsmf-gpu
 
