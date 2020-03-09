@@ -16,3 +16,4 @@ dependencies:
   - nose
   - xlrd
   - hyperopt
+  - jupyter
