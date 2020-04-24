@@ -1,7 +1,7 @@
 # Extensible Matrix Factorization (EMF)
 [![GitHub license](https://img.shields.io/github/license/lrgr/EMF.svg)](https://github.com/lrgr/xsmf/blob/master/LICENSE)
 
-![EMF schematic diagram](../../blob/master/emf_fig1.pdf)
+![EMF schematic diagram](../../blob/master/emf_fig1.png)
 
 Beta release EMF and other baselines are implemented with TensorFlow v1.
 
