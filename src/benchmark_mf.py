@@ -46,6 +46,9 @@ def parse_args():
 
 def add_mf_arguments(parser):
     parser.add_argument('--target_gis', type=str, required=True)
+    parser.add_argument('--pval_file', type=str, required=False)
+    parser.add_argument('--pval_thresh', type=float, default=0.05)
+
     parser.add_argument('--rank', type=int, required=True)
     parser.add_argument('--iters', type=int, required=True)
     parser.add_argument('--lr', type=float, required=True)
@@ -122,7 +125,7 @@ def train_pmf_models(train_Xs, rank, iters, lr, lam, report_every):
     models = [train_pmf_model(X, rank, iters, lr, lam, report_every)
               for X in train_Xs]
     fitted_Xs = [model.X_fitted for model in models]
-    factors = [(model.F, model.H) for model in models]
+    factors = [dict(F=model.F, H=model.H) for model in models]
     return fitted_Xs, factors
 
 
@@ -141,7 +144,7 @@ def train_pmf_b_models(train_Xs, rank, iters, lr, lam, lam_b, report_every):
     models = [train_pmf_b_model(X, rank, iters, lr, lam, lam_b, report_every)
               for X in train_Xs]
     fitted_Xs = [model.X_fitted for model in models]
-    factors = [(model.F, model.H) for model in models]
+    factors = [dict(F=model.F, H=model.H, br=model.bias_row, bc=model.bias_col) for model in models]
     return fitted_Xs, factors
 
 def train_kpmf_model(X_train, RL, 
@@ -169,7 +172,7 @@ def train_kpmf_models(train_Xs, L,
                                 report_every)
               for X in train_Xs]
     fitted_Xs = [model.X_fitted for model in models]
-    factors = [(model.F, model.H) for model in models]
+    factors = [dict(F=model.F, H=model.H) for model in models]
     return fitted_Xs, factors
 
 
@@ -200,7 +203,7 @@ def train_kpmf_b_models(train_Xs, L,
                                 report_every)
               for X in train_Xs]
     fitted_Xs = [model.X_fitted for model in models]
-    factors = [(model.F, model.H) for model in models]
+    factors = [dict(F=model.F, H=model.H, br=model.bias_row, bc=model.bias_col) for model in models]
     return fitted_Xs, factors
 
 def train_ngmc_model(X_train, A,
@@ -218,7 +221,7 @@ def train_ngmc_models(train_Xs, A,
                       rank, iters, lr, alpha_p, 
                       lambda_f, lambda_h, lambda_p) for X in train_Xs]
     fitted_Xs = [model.X_fitted for model in models]
-    # factors = [(model.F, model.H) for model in models]
+    # factors = [(model.F, model.H) for model in models] TODO
     return fitted_Xs, None
 
 def train_xsmf_model(X, X_src, sim_scores,
@@ -257,7 +260,7 @@ def train_xsmf_models(train_Xs, X_src,
                                 lambda_us, lambda_vs,
                                 report_every) for X in train_Xs]
     fitted_Xs = [model.X_fitted for model in models]
-    factors = [(model.U, model.V, model.US, model.VS) for model in models]
+    factors = [dict(U=model.U, V=model.V, US=model.US, VS=model.VS) for model in models]
     return fitted_Xs, factors
 
 def train_kxsmf_model(X, X_src, 
@@ -313,7 +316,7 @@ def train_kxsmf_models(train_Xs, X_src,
                                 lambda_src_rl,
                                 report_every) for X in train_Xs]
     fitted_Xs = [model.X_fitted for model in models]
-    factors = [(model.U, model.V, model.US, model.VS) for model in models]
+    factors = [dict(U=model.U, V=model.V, US=model.US, VS=model.VS) for model in models]
     return fitted_Xs, factors
 
 
@@ -374,11 +377,21 @@ def train_kxsmfb_models(train_Xs, X_src,
                                 lambda_src_rl,
                                 report_every) for X in train_Xs]
     fitted_Xs = [model.X_fitted for model in models]
-    factors = [(model.U, model.V, model.US, model.VS) for model in models]
+    factors = [dict(U=model.U, V=model.V, US=model.US, VS=model.VS, b=model.bias_tgt, bs=model.bias_src) for model in models]
     return fitted_Xs, factors
 
 def evaluate_a_pred(true_X, pred_X, mask):
-    return evaluate_model(true_X[mask], pred_X[mask])
+    pairlist0 = mask[0]
+    pairlist1 = mask[1]
+
+    preds = (pred_X[pairlist0[0], pairlist0[1]] + pred_X[pairlist1[0], pairlist1[1]]) / 2
+    true = true_X[pairlist0[0], pairlist0[1]]
+    
+    true  = true[~np.isnan(preds)]
+    preds = preds[~np.isnan(preds)]
+
+    assert(np.all(~np.isnan(true)))
+    return evaluate_model(true, preds)
 
 def evaluate_preds(true_Xs, pred_Xs, test_masks):
     return [evaluate_a_pred(true, predicted, mask) for true, predicted, mask in zip(true_Xs, pred_Xs, test_masks)]
@@ -408,16 +421,11 @@ def main():
     log.info('\t- setting up training and test sets')
     train_test_sets = [gi_train_test_split(gi_data, args.hidden_fraction) for _ in range(args.n_repeats)]
     
-    train_Xs, test_Xs , test_masks= zip(*train_test_sets)
+    train_Xs, test_Xs, test_masks= zip(*train_test_sets)
     if args.mc_alg == 'NGMC':
         scalers = [MCScaler('0-1') for _ in range(args.n_repeats)]
     else:
         scalers = [MCScaler('std') for _ in range(args.n_repeats)]
-
-    # if args.mc_alg in ['XSMF, KXSMF']:
-    #     train_Xs = [scaler.fit_transform(X).T for scaler, X in zip(scalers, train_Xs)] # Take transposes here for XSMF, KXSMF
-    # else:
-    #     train_Xs = [scaler.fit_transform(X) for scaler, X in zip(scalers, train_Xs)] # Take transposes here for XSMF, KXSMF
 
     train_Xs = [scaler.fit_transform(X) for scaler, X in zip(scalers, train_Xs)]
 
@@ -567,13 +575,6 @@ def main():
                                                     report_every = args.report_every)
     else:
         raise NotImplementedError
-
-    if len(gi_data['rows']) == len(gi_data['cols']) and np.all(gi_data['rows'] == gi_data['cols']):
-        log.info('* Averaging over pairs because input is symmetric')
-        imputed_Xs = [(X + X.T) / 2 for X in imputed_Xs]
-    # if args.mc_alg in ['XSMF, KXSMF']:
-    #     imputed_Xs = [scaler.inverse_transform(X).T for scaler, X in zip(scalers, imputed_Xs)] # Take transposes here for XSMF, KXSMF
-    # else:
     
     imputed_Xs = [scaler.inverse_transform(X) for scaler, X in zip(scalers, imputed_Xs)] # Take transposes here for XSMF, KXSMF
 
@@ -581,11 +582,44 @@ def main():
     results, fold_results = summarize_results(results)
     log_results(results)
 
+    results_dict = dict(summary=results, collected=fold_results, args=vars(args))
+
+    pvals_data = None
+    if args.pval_file:
+        # given pval file
+        with open(args.pval_file, 'rb') as f:
+            pvals_data = cpkl.load(f)
+        assert(np.all(pvals_data['cols'] == gi_data['cols']))
+        assert(np.all(pvals_data['rows'] == gi_data['rows']))
+
+        pvals = pvals_data['values']
+        pvals_filled = np.where(np.isnan(pvals), 1000, pvals)
+        sig_mask = pvals_filled < args.pval_thresh
+
+        sig_test_Xs = [np.where(sig_mask, _X, np.nan) for _X in test_Xs]
+        sig_imputed_Xs = [np.where(sig_mask, _X, np.nan) for _X in imputed_Xs]
+
+        sig_results = evaluate_preds(sig_test_Xs, sig_imputed_Xs, test_masks)
+        sig_results, sig_fold_results = summarize_results(sig_results)
+        log_results(sig_results)
+
+        results_dict['sig_summary'] = sig_results
+        results_dict['sig_collected'] = sig_fold_results
+
     with open(args.results_output, 'w') as f:
-        json.dump(dict(summary=results, collected=fold_results, args=vars(args)), f, indent=2)
+        json.dump(results_dict, f, indent=2)
+
+    serialized_data = {
+        'GIs': gi_data,
+        'alg': args.mc_alg,
+        'fold_data': dict(train_Xs=train_Xs, test_Xs=test_Xs, masks=test_masks),
+        'imputed_Xs': imputed_Xs,
+        'models_info': models_info,
+        'pvals': pvals_data
+    }
 
     with open(args.models_output, 'wb') as f:
-        cpkl.dump(models_info, f)
+        cpkl.dump(serialized_data, f)
 
 if __name__ == "__main__":
     main()

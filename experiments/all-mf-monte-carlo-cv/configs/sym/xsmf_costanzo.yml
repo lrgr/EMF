@@ -1,6 +1,6 @@
 algorithm: XSMF
-tgt_gis: costanzo10
-src_gis: ryan
+tgt_gis: costanzo10-sym
+src_gis: ryan-sym
 sim_scores: costanzo-ryan
 n_repeats: 10
 pvals: True

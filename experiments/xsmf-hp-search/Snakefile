@@ -23,9 +23,7 @@ log = join(output_dir, '{}-log.txt'.format(exp_name))
 
 rule all:
     input:
-        #expand(results, hf=[0.25, 0.5, 0.75, 0.9])
-        expand(results, hf=[0.25])
-
+        expand(results, hf=[0.25, 0.5, 0.75, 0.9])
 
 rule once:
     input:

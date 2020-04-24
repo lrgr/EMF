@@ -2,7 +2,10 @@ gi_data_fps = {
     'collins': '../gi/output/collins_et_al/collins_et_al-dels_only.cpkl',
     'roguev': '../gi/output/roguev_et_al/roguev_et_al-dels_only.cpkl',
     'ryan': '../gi/output/ryan_et_al_2012/ryan_2012_sp_gis.cpkl',
-    'costanzo10': '../gi/output/costanzo_et_al_2010/costanzo2010-GI_score.cpkl'
+    'costanzo10': '../gi/output/costanzo_et_al_2010/costanzo2010-GI_score.cpkl',
+
+    'ryan_sym': '../gi/output/symmetrized/ryan_et_al_2012-GI_score.cpkl',
+    'costanzo10_sym': '../gi/output/symmetrized/costanzo_et_al_2010-GI_score.cpkl',
 }
 
 raw_blast = 'output/raw/sp-to-sc-blast.tsv'
@@ -20,8 +23,9 @@ url = "https://obj.umiacs.umd.edu/lrgr/all_vs_all_BLAST/pombase-sgd/sc-to-sp.tsv
 
 rule all:
     input:
-        expand(gi_specific_scores, zip, target_gis=['roguev', 'ryan'], source_gis=['collins', 'costanzo10']),
-        expand(gi_specific_scores_swap, zip, target_gis=['roguev', 'ryan'], source_gis=['collins', 'costanzo10'])
+        expand(gi_specific_scores, zip, target_gis=['roguev', 'ryan', 'ryan_sym'], source_gis=['collins', 'costanzo10', 'costanzo10_sym']),
+        expand(gi_specific_scores_swap, zip, target_gis=['roguev', 'ryan', 'ryan_sym'], source_gis=['collins', 'costanzo10', 'costanzo10_sym'])
+
 
 
 rule restrict_blast_scores:

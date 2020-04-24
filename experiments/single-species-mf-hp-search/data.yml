@@ -4,6 +4,9 @@ gis:
   ryan: ../../data/gi/output/ryan_et_al_2012/ryan_2012_sp_gis.cpkl
   costanzo10: ../../data/gi/output/costanzo_et_al_2010/costanzo2010-GI_score.cpkl
 
+  costanzo10_sym: ../../data/gi/output/symmetrized/costanzo_et_al_2010-GI_score.cpkl
+  ryan_sym: ../../data/gi/output/symmetrized/ryan_et_al_2012-GI_score.cpkl
+
 ppi:
   sc-biogrid: ../../data/ppi/output/sc-biogrid.v3.5.174-ppi.tsv
   sp-biogrid: ../../data/ppi/output/sp-biogrid.v3.5.174-ppi.tsv

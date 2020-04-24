@@ -1,0 +1,38 @@
+algorithm: KPMF-b
+tgt_gis: ryan-sym
+tgt_ppi: sp-biogrid
+n_repeats: 10
+
+params:
+  '0.25':
+    lambda_b: 0.546
+    lambda_f: 6.955
+    lambda_h: 7.317
+    lr: 0.254
+    iters: 54
+    rank: 170
+    rl_lambda: 0.023
+  '0.5':
+    lambda_b: 0.104
+    lambda_f: 9.898
+    lambda_h: 3.693
+    lr: 0.182
+    iters: 73
+    rank: 175
+    rl_lambda: 0.070
+  '0.75':
+    lambda_b: 0.136
+    lambda_f: 6.671
+    lambda_h: 4.909
+    lr: 0.268
+    iters: 47
+    rank: 185
+    rl_lambda: 0.133
+  '0.9':
+    lambda_b: 3.924
+    lambda_f: 9.978
+    lambda_h: 2.657
+    lr: 0.408
+    iters: 45
+    rank: 160
+    rl_lambda: 0.240

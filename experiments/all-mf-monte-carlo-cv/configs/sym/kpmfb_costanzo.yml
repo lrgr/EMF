@@ -1,5 +1,5 @@
 algorithm: KPMF-b
-tgt_gis: costanzo10
+tgt_gis: costanzo10-sym
 tgt_ppi: sc-biogrid
 n_repeats: 10
 pvals: True

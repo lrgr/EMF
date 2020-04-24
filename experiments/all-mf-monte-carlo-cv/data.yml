@@ -3,6 +3,9 @@ gis:
   roguev: ../../data/gi/output/roguev_et_al/roguev_et_al-dels_only.cpkl
   ryan: ../../data/gi/output/ryan_et_al_2012/ryan_2012_sp_gis.cpkl
   costanzo10: ../../data/gi/output/costanzo_et_al_2010/costanzo2010-GI_score.cpkl
+
+  costanzo10-sym: ../../data/gi/output/symmetrized/costanzo_et_al_2010-GI_score.cpkl
+  ryan-sym: ../../data/gi/output/symmetrized/ryan_et_al_2012-GI_score.cpkl
 ppi:
   sc-biogrid: ../../data/ppi/output/sc-biogrid.v3.5.174-ppi.tsv
   sp-biogrid: ../../data/ppi/output/sp-biogrid.v3.5.174-ppi.tsv
@@ -19,3 +22,11 @@ sim_scores:
     collins-roguev: ../../data/blast/output/gi_specific_scores/src=roguev-tgt=collins-blast_scores.cpkl
     ryan-costanzo: ../../data/blast/output/gi_specific_scores/ryan-costanzo10-blast_scores.cpkl
     costanzo-ryan: ../../data/blast/output/gi_specific_scores/src=ryan-tgt=costanzo10-blast_scores.cpkl
+
+
+    sym-ryan-costanzo: ../../data/blast/output/gi_specific_scores/ryan_sym-costanzo10_sym-blast_scores.cpkl
+    sym-costanzo-ryan: ../../data/blast/output/gi_specific_scores/src=ryan_sym-tgt=costanzo10_sym-blast_scores.cpkl
+
+pvals:
+  costanzo10: ../../data/gi/output/costanzo_et_al_2010/costanzo2010-GI_pval.cpkl
+  costanzo10-sym: ../../data/gi/output/symmetrized/costanzo_et_al_2010-p_vals.cpkl

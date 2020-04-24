@@ -1,0 +1,49 @@
+algorithm: XSMF
+tgt_gis: ryan-sym
+src_gis: costanzo10-sym
+sim_scores: ryan-costanzo
+
+
+n_repeats: 10
+
+params:
+  '0.25':
+    lambda_sim: 3.720
+    lambda_src: 0.140
+    lambda_u: 32.141
+    lambda_us: 10.271
+    lambda_v: 17.243
+    lambda_vs: 47.762
+    lr: 0.115
+    iters: 500
+    rank: 180
+  '0.5':
+    lambda_sim: 2.832
+    lambda_src: 0.811
+    lambda_u: 18.320
+    lambda_us: 25.910
+    lambda_v: 27.299
+    lambda_vs: 96.201
+    lr: 0.199
+    iters: 431
+    rank: 115
+  '0.75':
+    lambda_sim: 0.807
+    lambda_src: 0.504
+    lambda_u: 22.392
+    lambda_us: 74.255
+    lambda_v: 13.689
+    lambda_vs: 10.122
+    lr: 0.174
+    iters: 443
+    rank: 195
+  '0.9':
+    lambda_sim: 1.327
+    lambda_src: 0.360
+    lambda_u: 15.340
+    lambda_us: 32.966
+    lambda_v: 17.141
+    lambda_vs: 11.010
+    lr: 0.117
+    iters: 194
+    rank: 120

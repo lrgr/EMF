@@ -67,8 +67,7 @@ run_benchmark = '../../src/benchmark_mf.py'
 params = config['params']
 rule all:
     input:
-        #expand(results, alg=config['algorithm'], hf=[0.25, 0.5, 0.75, 0.9])
-        expand(results, alg=config['algorithm'], hf=[0.25])
+        expand(results, alg=config['algorithm'], hf=[0.25, 0.5, 0.75, 0.9])
 
 rule pmf:
     input:
@@ -86,21 +85,23 @@ rule pmf:
         iters=lambda w: params[w['hf']]['iters'],
         lr=lambda w: params[w['hf']]['lr'],
         lam=lambda w: params[w['hf']]['lambda'],
+        pvals = '--pval_file {}'.format(data_paths['pvals'][config['tgt_gis']]) \
+                if config.get('pvals', False) else ''
     shell:
         '''
-        python {run_benchmark} \
+        PYTHONHASHSEED=0 python {run_benchmark} \
             --hidden_fraction {params.hidden_fraction} \
             --n_repeats {params.n_repeats} \
             --results_output {output.results} \
             --models_output {output.models} \
             --logfile {log} \
             PMF \
-            --target_gis {input.gis}\
+            --target_gis {input.gis} {params.pvals}\
             --report_every {params.report_every}\
             --rank {params.rank}\
             --iters {params.iters}\
             --lr {params.lr}\
-            --lambda_f {params.lam}    
+            --lambda_f {params.lam} 
         '''
 
 rule pmf_b:
@@ -119,17 +120,19 @@ rule pmf_b:
         iters=lambda w: params[w['hf']]['iters'],
         lr=lambda w: params[w['hf']]['lr'],
         lam=lambda w: params[w['hf']]['lambda'],
-        lam_b=lambda w: params[w['hf']]['lambda_b']
+        lam_b=lambda w: params[w['hf']]['lambda_b'],
+        pvals = '--pval_file {}'.format(data_paths['pvals'][config['tgt_gis']]) \
+                if config.get('pvals', False) else ''
     shell:
         '''
-        python {run_benchmark} \
+        PYTHONHASHSEED=0 python {run_benchmark} \
             --hidden_fraction {params.hidden_fraction} \
             --n_repeats {params.n_repeats} \
             --results_output {output.results} \
             --models_output {output.models} \
             --logfile {log} \
             PMF_b \
-            --target_gis {input.gis}\
+            --target_gis {input.gis} {params.pvals}\
             --report_every {params.report_every}\
             --rank {params.rank}\
             --iters {params.iters}\
@@ -156,17 +159,19 @@ rule kpmf:
         lr=lambda w: params[w['hf']]['lr'],
         lambda_f=lambda w: params[w['hf']]['lambda_f'],
         lambda_h=lambda w: params[w['hf']]['lambda_h'],
-        rl_lambda=lambda w: params[w['hf']]['rl_lambda']
+        rl_lambda=lambda w: params[w['hf']]['rl_lambda'],
+        pvals = '--pval_file {}'.format(data_paths['pvals'][config['tgt_gis']]) \
+                if config.get('pvals', False) else ''
     shell:
         '''
-        python {run_benchmark} \
+        PYTHONHASHSEED=0 python {run_benchmark} \
             --hidden_fraction {params.hidden_fraction} \
             --n_repeats {params.n_repeats} \
             --results_output {output.results} \
             --models_output {output.models} \
             --logfile {log} \
             KPMF \
-            --target_gis {input.gis}\
+            --target_gis {input.gis} {params.pvals}\
             --target_ppi {input.ppi}\
             --report_every {params.report_every}\
             --rank {params.rank}\
@@ -197,17 +202,19 @@ rule kpmfb:
         lambda_b=lambda w: params[w['hf']]['lambda_b'],
         lambda_f=lambda w: params[w['hf']]['lambda_f'],
         lambda_h=lambda w: params[w['hf']]['lambda_h'],
-        rl_lambda=lambda w: params[w['hf']]['rl_lambda']
+        rl_lambda=lambda w: params[w['hf']]['rl_lambda'],
+        pvals = '--pval_file {}'.format(data_paths['pvals'][config['tgt_gis']]) \
+                if config.get('pvals', False) else ''
     shell:
         '''
-        python {run_benchmark} \
+        PYTHONHASHSEED=0 python {run_benchmark} \
             --hidden_fraction {params.hidden_fraction} \
             --n_repeats {params.n_repeats} \
             --results_output {output.results} \
             --models_output {output.models} \
             --logfile {log} \
             KPMF_b \
-            --target_gis {input.gis}\
+            --target_gis {input.gis} {params.pvals}\
             --target_ppi {input.ppi}\
             --report_every {params.report_every}\
             --rank {params.rank}\
@@ -242,14 +249,14 @@ rule ngmc:
         lambda_p=lambda w: params[w['hf']]['lambda_p'],
     shell:
         '''
-        python {run_benchmark} \
+        PYTHONHASHSEED=0 python {run_benchmark} \
             --hidden_fraction {params.hidden_fraction} \
             --n_repeats {params.n_repeats} \
             --results_output {output.results} \
             --models_output {output.models} \
             --logfile {log} \
             NGMC \
-            --target_gis {input.gis}\
+            --target_gis {input.tgt_gis} {params.pvals}\
             --target_ppi {input.ppi}\
             --report_every {params.report_every}\
             --rank {params.rank}\
@@ -284,17 +291,19 @@ rule xsmf:
         lambda_us=lambda w: params[w['hf']]['lambda_us'],
         lambda_v=lambda w: params[w['hf']]['lambda_v'],
         lambda_vs=lambda w: params[w['hf']]['lambda_vs'],
+        pvals = '--pval_file {}'.format(data_paths['pvals'][config['tgt_gis']]) \
+                if config.get('pvals', False) else ''
 
     shell:
         '''
-        python {run_benchmark} \
+        PYTHONHASHSEED=0 python {run_benchmark} \
             --hidden_fraction {params.hidden_fraction} \
             --n_repeats {params.n_repeats} \
             --results_output {output.results} \
             --models_output {output.models} \
             --logfile {log} \
             XSMF \
-            --target_gis {input.tgt_gis}\
+            --target_gis {input.tgt_gis} {params.pvals}\
             --source_gis {input.src_gis}\
             --sim_scores {input.sim_scores}\
             --report_every {params.report_every}\
@@ -316,7 +325,7 @@ rule kxsmf:
         src_gis=lambda _ : data_paths['gis'][config['src_gis']],
         sim_scores=lambda _ : data_paths['sim_scores'][config['sim_scores']],
         tgt_ppi=lambda _ : data_paths['ppi'][config['tgt_ppi']],
-        src_ppi=lambda _ : data_paths['ppi'][config['src_ppi']],
+        src_ppi=lambda _ : data_paths['ppi'][config['src_ppi']]
     output:
         results=results.format(alg='KXSMF', hf='{hf}'),
         models=models_pkl.format(alg='KXSMF', hf='{hf}'),
@@ -337,17 +346,19 @@ rule kxsmf:
         lambda_vs=lambda w: params[w['hf']]['lambda_vs'],
         lambda_src_rl=lambda w: params[w['hf']]['lambda_src_rl'],
         lambda_tgt_rl=lambda w: params[w['hf']]['lambda_tgt_rl'],
+        pvals = '--pval_file {}'.format(data_paths['pvals'][config['tgt_gis']]) \
+                if config.get('pvals', False) else ''
 
     shell:
         '''
-        python {run_benchmark} \
+        PYTHONHASHSEED=0 python {run_benchmark} \
             --hidden_fraction {params.hidden_fraction} \
             --n_repeats {params.n_repeats} \
             --results_output {output.results} \
             --models_output {output.models} \
             --logfile {log} \
             KXSMF \
-            --target_gis {input.tgt_gis}\
+            --target_gis {input.tgt_gis} {params.pvals}\
             --source_gis {input.src_gis}\
             --target_ppi {input.tgt_ppi}\
             --source_ppi {input.src_ppi}\
@@ -395,17 +406,19 @@ rule kxsmf_b:
         lambda_vs=lambda w: params[w['hf']]['lambda_vs'],
         lambda_src_rl=lambda w: params[w['hf']]['lambda_src_rl'],
         lambda_tgt_rl=lambda w: params[w['hf']]['lambda_tgt_rl'],
+        pvals = '--pval_file {}'.format(data_paths['pvals'][config['tgt_gis']]) \
+                if config.get('pvals', False) else ''
 
     shell:
         '''
-        python {run_benchmark} \
+        PYTHONHASHSEED=0 python {run_benchmark} \
             --hidden_fraction {params.hidden_fraction} \
             --n_repeats {params.n_repeats} \
             --results_output {output.results} \
             --models_output {output.models} \
             --logfile {log} \
             KXSMF_b \
-            --target_gis {input.tgt_gis}\
+            --target_gis {input.tgt_gis} {params.pvals}\
             --source_gis {input.src_gis}\
             --target_ppi {input.tgt_ppi}\
             --source_ppi {input.src_ppi}\

@@ -1,7 +1,7 @@
 algorithm: PMF
 tgt_gis: costanzo10
-n_repeats: 10
 pvals: True
+n_repeats: 1
 
 params:
   '0.25':

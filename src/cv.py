@@ -26,6 +26,52 @@ def get_mask(pairs, shape, row_g2i, col_g2i, sym=True):
             inserted = True
         assert(inserted)
     return mask
+
+def get_eval_pair_list(pairs, row_g2i, col_g2i, gi_data):
+    values = gi_data['values']
+
+    pairlist_1 = []
+    pairlist_2 = []
+    for A, B in pairs:
+        A_r = row_g2i.get(A)
+        B_c = col_g2i.get(B)
+        A_c = col_g2i.get(A)
+        B_r = row_g2i.get(B)
+        if (A_r is not None) and \
+               (B_c is not None) and \
+               (A_c is not None) and \
+               (B_r is not None):
+
+            v_ab = values[A_r, B_c]
+            v_ba = values[B_r, A_c]
+
+            if not (np.isnan(v_ab) or np.isnan(v_ba)):
+                pairlist_1.append((A_r, B_c))
+                pairlist_2.append((B_r, A_c))
+            else:
+                pass
+
+        elif (A_r is not None) and \
+                (B_c is not None):
+            if not np.isnan(values[A_r, B_c]):
+                pairlist_1.append((A_r, B_c))
+                pairlist_2.append((A_r, B_c))
+            else:
+                pass
+
+        elif (A_c is not None) and \
+                (B_r is not None):
+            if not np.isnan(values[B_r, A_c]):
+                pairlist_1.append((B_r, A_c))
+                pairlist_2.append((B_r, A_c))
+            else:
+                pass
+        else:
+            continue
+    
+    pairlist_1 = tuple(zip(*pairlist_1))
+    pairlist_2 = tuple(zip(*pairlist_2))
+    return pairlist_1, pairlist_2
     
 def gi_train_test_split(gi_data, hf):
     '''
@@ -33,6 +79,10 @@ def gi_train_test_split(gi_data, hf):
     
     eval_mask is mask of unique pairs for evaluation
     '''
+
+    # if _is_sym(gi_data):
+    #     print("USE SYM CV")
+    #     return sym_train_test_split(gi_data, hf)
 
     rows = gi_data['rows']
     cols = gi_data['cols']
@@ -60,8 +110,50 @@ def gi_train_test_split(gi_data, hf):
     test_X = np.where(test_mask, values, np.nan)
     
     # Get mask for evaluation time... (this mask only has one gi score per pair)
-    eval_mask = get_mask(test_pairs, values.shape, row_g2i, col_g2i, sym=False)
-    eval_mask = np.logical_and(value_mask, eval_mask)
+    # eval_mask = get_mask(test_pairs, values.shape, row_g2i, col_g2i, sym=False)
+    # eval_mask = np.logical_and(value_mask, eval_mask)
+
+    eval_pairs1, eval_pairs2 = get_eval_pair_list(test_pairs, row_g2i, col_g2i, gi_data)
+
     assert(np.all(~np.isnan(test_X[test_mask])))
-    assert(np.all(~np.isnan(test_X[eval_mask])))
+
+    assert(np.all(~np.isnan(test_X[eval_pairs1[0], eval_pairs1[1]])))
+    assert(np.all(~np.isnan(test_X[eval_pairs2[0], eval_pairs2[1]])))
+
+    return train_X, test_X, (eval_pairs1, eval_pairs2)
+
+def sym_train_test_split(gi_data, hf):
+    values = gi_data['values']
+    
+    assert(np.allclose(values, values.T, equal_nan=True))
+    N = len(values)
+    
+    eval_mask = np.random.uniform(size=values.shape) < hf
+    
+    lower_tri_mask = np.tri(N, N, k=-1, dtype=bool)
+    
+    eval_mask = np.logical_and(eval_mask, lower_tri_mask)
+    eval_mask = np.logical_and(eval_mask, ~np.isnan(values))
+        
+    diag = np.zeros(len(values), dtype=bool)
+    
+    test_mask = np.logical_or(eval_mask, eval_mask.T)
+    
+    train_mask = ~test_mask
+    train_mask[diag] = False
+    
+    train_X = np.where(train_mask, values, np.nan)
+    test_X = np.where(test_mask, values, np.nan)
+    
+    assert(np.sum(eval_mask) / np.sum(~np.isnan(test_X)) == 0.5)
+
     return train_X, test_X, eval_mask
+
+def _is_sym(gi_data):
+
+    if len(gi_data['rows']) != len(gi_data['cols']):
+        return False
+        
+    cond0 = np.allclose(gi_data['values'], gi_data['values'].T, equal_nan=True)
+    cond1 = np.all(gi_data['rows'] == gi_data['cols'])
+    return cond0 and cond1
