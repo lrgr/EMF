@@ -15,3 +15,15 @@ homologs/costanzo10-cols_ryan12-cols_homologs.tsv: |
   https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v0/homologs/ryan12_costanzo10/costanzo10-cols_ryan12-cols_homologs.tsv
 homologs/ryan12-cols_costanzo10-cols_homologs.tsv: |
   https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v0/homologs/ryan12_costanzo10/ryan12-cols_costanzo10-cols_homologs.tsv
+
+# Sym
+symmetrized/costanzo_et_al_2010-GI_score.cpkl: |
+  https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v1/symmetrized/costanzo_et_al_2010-GI_score.cpkl
+symmetrized/costanzo_et_al_2010-p_vals.cpkl: |
+  https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v1/symmetrized/costanzo_et_al_2010-p_vals.cpkl
+symmetrized/dcell_data-GI_score.cpkl: |
+  https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v1/symmetrized/dcell_data-GI_score.cpkl
+symmetrized/dcell_data-p_vals.cpkl: |
+  https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v1/symmetrized/dcell_data-p_vals.cpkl
+symmetrized/ryan_et_al_2012-GI_score.cpkl: |
+  https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v1/symmetrized/ryan_et_al_2012-GI_score.cpkl

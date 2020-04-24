@@ -1,14 +1,14 @@
-# Cross-species Matrix Factorization (XSMF)
-[![GitHub license](https://img.shields.io/github/license/lrgr/xsmf.svg)](https://github.com/lrgr/xsmf/blob/master/LICENSE)
+# Extensible Matrix Factorization (EMF)
+[![GitHub license](https://img.shields.io/github/license/lrgr/EMF.svg)](https://github.com/lrgr/xsmf/blob/master/LICENSE)
 
-Beta release. XSMF and other baselines are implemented with TensorFlow v1.
+![EMF schematic diagram](../blob/master/emf_fig1.pdf)
 
-### Notes
-- KXSMF2 and XMSF2 models correspond to similarity score regularized cross-species models.
+
+Beta release EMF and other baselines are implemented with TensorFlow v1.
 
 ## Setup:
 
-We recommend users to install required packages dependencies for the XSMF models and experiments, using [Conda](https://conda.io/miniconda.html). To install Python and other dependencies, which you can do directly using the provided `environment.yml file`:
+We recommend users to install required packages dependencies for the EMF models and experiments, using [Conda](https://conda.io/miniconda.html). To install Python and other dependencies, which you can do directly using the provided `environment.yml file`:
 
     conda env create -f environment.yml
     source activate xsmf
