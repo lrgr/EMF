@@ -3,7 +3,6 @@
 
 ![EMF schematic diagram](../blob/master/emf_fig1.pdf)
 
-
 Beta release EMF and other baselines are implemented with TensorFlow v1.
 
 ## Setup:
@@ -18,6 +17,7 @@ The `xsmf` Conda environment can be used to run any number of experiments and ex
 ### To run models using GPUs:
 
 To use GPUs, install the `xsmf-gpu` environment via:
+
     conda env create -f environment-gpu.yml
     source activate xsmf-gpu
 
@@ -25,7 +25,7 @@ To use GPUs, install the `xsmf-gpu` environment via:
 
 ### 10 fold Monte-Carlo cross-validation benchmarks of matrix factorization models
 
-See `experiments/mc-benchmarks`.
+See `experiments/all-mf-monte-carlo-cv`.
 
 ### Hyperparameter search with `hyperopt`
 
