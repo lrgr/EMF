@@ -6,7 +6,8 @@ import networkx as nx
 import numpy as np
 import tensorflow as tf
 
-from cv import gi_train_test_split
+from cv import gi_train_test_split_w_pairlists as gi_train_test_split
+
 from i_o import get_logger, log_dict, setup_logging
 from matrix_completion import KPMF, PMF, KPMF_b, MCScaler, PMF_b
 

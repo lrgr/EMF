@@ -73,17 +73,12 @@ def get_eval_pair_list(pairs, row_g2i, col_g2i, gi_data):
     pairlist_2 = tuple(zip(*pairlist_2))
     return pairlist_1, pairlist_2
     
-def gi_train_test_split(gi_data, hf):
+def gi_train_test_split_w_pairlists(gi_data, hf):
     '''
-    Returns Train_X, Test_X, eval_mask
-    
-    eval_mask is mask of unique pairs for evaluation
+    Sample train/test set but return lists of indices whose indexed values should be
+    averaged for evaluation
+        [(A,B), ...], [(B,A),...]
     '''
-
-    # if _is_sym(gi_data):
-    #     print("USE SYM CV")
-    #     return sym_train_test_split(gi_data, hf)
-
     rows = gi_data['rows']
     cols = gi_data['cols']
     values = gi_data['values']
@@ -100,8 +95,9 @@ def gi_train_test_split(gi_data, hf):
     train_pairs, test_pairs = train_test_split(pairs, test_size=hf)
     test_mask = get_mask(test_pairs, values.shape, row_g2i, col_g2i)
     
-    # TODO: This implements train/test over *all* possible pairs, but this needs fixing... 
-    # since not all pairs have value in GI matrix
+    # This implements train/test over *all* possible pairs,
+    # in expectation is equivalent to CV over observed pairs
+
     value_mask = ~np.isnan(values)
     test_mask =  np.logical_and(value_mask,  test_mask)
     train_mask = np.logical_and(value_mask, ~test_mask)
@@ -109,10 +105,6 @@ def gi_train_test_split(gi_data, hf):
     train_X = np.where(train_mask, values, np.nan)
     test_X = np.where(test_mask, values, np.nan)
     
-    # Get mask for evaluation time... (this mask only has one gi score per pair)
-    # eval_mask = get_mask(test_pairs, values.shape, row_g2i, col_g2i, sym=False)
-    # eval_mask = np.logical_and(value_mask, eval_mask)
-
     eval_pairs1, eval_pairs2 = get_eval_pair_list(test_pairs, row_g2i, col_g2i, gi_data)
 
     assert(np.all(~np.isnan(test_X[test_mask])))
@@ -157,3 +149,43 @@ def _is_sym(gi_data):
     cond0 = np.allclose(gi_data['values'], gi_data['values'].T, equal_nan=True)
     cond1 = np.all(gi_data['rows'] == gi_data['cols'])
     return cond0 and cond1
+
+def gi_train_test_split(gi_data, hf):
+    '''
+    Returns Train_X, Test_X, eval_mask
+    
+    eval_mask is mask of unique pairs for evaluation
+    '''
+
+    rows = gi_data['rows']
+    cols = gi_data['cols']
+    values = gi_data['values']
+    col_g2i = dict((n, i) for i, n in enumerate(cols))
+    row_g2i = dict((n, i) for i, n in enumerate(rows))
+    
+    rowset = set(rows)
+    colset = set(cols)
+    
+    pairs = product(rows, cols)
+    pairs =  set(frozenset((a,b)) for a,b in pairs if a != b)
+    pairs = [tuple(p) for p in pairs]
+    
+    train_pairs, test_pairs = train_test_split(pairs, test_size=hf)
+    test_mask = get_mask(test_pairs, values.shape, row_g2i, col_g2i)
+    
+    # This implements train/test over *all* possible pairs,
+    # in expectation is equivalent to CV over observed pairs
+
+    value_mask = ~np.isnan(values)
+    test_mask =  np.logical_and(value_mask,  test_mask)
+    train_mask = np.logical_and(value_mask, ~test_mask)
+    
+    train_X = np.where(train_mask, values, np.nan)
+    test_X = np.where(test_mask, values, np.nan)
+    
+    # Get mask for evaluation time... (this mask only has one gi score per pair)
+    eval_mask = get_mask(test_pairs, values.shape, row_g2i, col_g2i, sym=False)
+    eval_mask = np.logical_and(value_mask, eval_mask)
+    assert(np.all(~np.isnan(test_X[test_mask])))
+    assert(np.all(~np.isnan(test_X[eval_mask])))
+    return train_X, test_X, eval_mask
