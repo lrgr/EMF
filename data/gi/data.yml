@@ -27,3 +27,7 @@ symmetrized/dcell_data-p_vals.cpkl: |
   https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v1/symmetrized/dcell_data-p_vals.cpkl
 symmetrized/ryan_et_al_2012-GI_score.cpkl: |
   https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v1/symmetrized/ryan_et_al_2012-GI_score.cpkl
+
+# DCell and Ontotype Preds
+dcell_and_ontotype/dcell-onto-data.tsv: |
+  https://obj.umiacs.umd.edu/lrgr/gi-data/alpha_v1/dcell_and_ontotype/dcell-onto-data.tsv
