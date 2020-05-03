@@ -1,0 +1,20 @@
+from os.path import join
+
+models_dir = 'models'
+
+rule all:
+    input:
+        join(models_dir, "collins-mf-0.25.pkl")
+    shell:
+        '''
+        python evaluate_EMF_model.py --model_file {input}
+        '''
+rule download:
+    params:
+        url = 'https://obj.umiacs.umd.edu/lrgr/EMF/ECCB-v0/collins-output/tgt-gi%3Dcollins_alg%3DPMF_hf0.25_cv10/tgt-gi%3Dcollins_alg%3DPMF_hf0.25_cv10_models.pkl'
+    output:
+        join(models_dir, "collins-mf-0.25.pkl")
+    shell:
+        '''
+        wget -O {output} {params.url}
+        '''
