@@ -226,10 +226,9 @@ rule kpmfb:
             --rl_lambda {params.rl_lambda}
         '''
 
-
 rule ngmc:
     input:
-        gis=data_paths['gis'][config['tgt_gis']],
+        tgt_gis=data_paths['gis'][config['tgt_gis']],
         ppi= lambda _ : data_paths['ppi'][config['tgt_ppi']]
     output:
         results=results.format(alg='NGMC', hf='{hf}'),
@@ -256,7 +255,7 @@ rule ngmc:
             --models_output {output.models} \
             --logfile {log} \
             NGMC \
-            --target_gis {input.tgt_gis} {params.pvals}\
+            --target_gis {input.tgt_gis}\
             --target_ppi {input.ppi}\
             --report_every {params.report_every}\
             --rank {params.rank}\
