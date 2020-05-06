@@ -12,11 +12,11 @@ We recommend users to install required packages dependencies for the EMF models 
     conda env create -f environment.yml
     source activate EMF
 
-The `xsmf` Conda environment can be used to run any number of experiments and examples included in this project/repository. We note that experiments and data download for other parts of this project are implemented and configured with [Snakemake](http://snakemake.readthedocs.io/en/stable/) which will be installed as part of the `EMF` environment.
+The `emf` Conda environment can be used to run any number of experiments and examples included in this project/repository. We note that experiments and data download for other parts of this project are implemented and configured with [Snakemake](http://snakemake.readthedocs.io/en/stable/) which will be installed as part of the `EMF` environment.
 
 ### To run models using GPUs:
 
-To use GPUs, install the `xsmf-gpu` environment via:
+To use GPUs, install the `emf-gpu` environment via:
 
     conda env create -f environment-gpu.yml
     source activate EMF-gpu
